@@ -6,7 +6,7 @@ import { connection } from "./app/db/database";
 import swaggerUI from "swagger-ui-express";
 
 import authRouter from "./app/routes/auth.router";
-
+import cors from 'cors';
 dotenv.config();
 
 export class App {
@@ -18,6 +18,7 @@ export class App {
     this.middleware();
     this.router();
     this.connectDB();
+    this.server.use(cors())
   }
 
   private middleware() {
