@@ -13,21 +13,21 @@ export const login = async (req: Request, res: Response) => {
   }
 
   try {
-    const customers = await query("SELECT * FROM customers WHERE email=?", [
+    const customer = await query("SELECT * FROM customer WHERE email=?", [
       email,
     ]);
-    const producers = await query("SELECT * FROM producers WHERE email=?", [
+    const producer = await query("SELECT * FROM producer WHERE email=?", [
       email,
     ]);
 
-    if (customers.length === 0 && producers.length === 0) {
+    if (customer.length === 0 && producer.length === 0) {
       return res.status(400).json({
         message: "Não foi possivel logar",
       });
     }
 
-    if (producers.length > 0) {
-      const isMatch = await bcrypt.compare(password, producers[0].password);
+    if (producer.length > 0) {
+      const isMatch = await bcrypt.compare(password, producer[0].password);
 
       if (!isMatch) {
         return res.status(400).json({
@@ -35,9 +35,9 @@ export const login = async (req: Request, res: Response) => {
         });
       }
 
-      delete producers[0].password;
+      delete producer[0].password;
 
-      const { accessToken, refreshToken } = generateTokens(producers);
+      const { accessToken, refreshToken } = generateTokens(producer);
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -47,8 +47,8 @@ export const login = async (req: Request, res: Response) => {
       });
 
       return res.status(200).json({ accessToken });
-    } else if (customers.length > 0) {
-      const isMatch = await bcrypt.compare(password, customers[0].password);
+    } else if (customer.length > 0) {
+      const isMatch = await bcrypt.compare(password, customer[0].password);
 
       if (!isMatch) {
         return res.status(400).json({
@@ -56,9 +56,9 @@ export const login = async (req: Request, res: Response) => {
         });
       }
 
-      delete customers[0].password;
+      delete customer[0].password;
 
-      const { accessToken, refreshToken } = generateTokens(customers);
+      const { accessToken, refreshToken } = generateTokens(customer);
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -149,7 +149,7 @@ export const registerCustomer = async (req: Request, res: Response) => {
       createdAt: new Date(),
     };
 
-    const result = await query("INSERT INTO customers SET ?", [newUser]);
+    const result = await query("INSERT INTO customer SET ?", [newUser]);
 
     if (result.affectedRows === 1) {
       const { accessToken, refreshToken } = generateTokens(newUser);
@@ -202,7 +202,7 @@ export const registerProducer = async (req: Request, res: Response) => {
       createdAt: new Date(),
     };
 
-    const result = await query("INSERT INTO producers SET ?", [newUser]);
+    const result = await query("INSERT INTO producer SET ?", [newUser]);
 
     if (result.affectedRows === 1) {
       const { accessToken, refreshToken } = generateTokens(newUser);
@@ -228,8 +228,8 @@ export const getUser = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const user = await query("SELECT * FROM customers WHERE id=?", [id]);
-        const producer = await query("SELECT * FROM producers WHERE id=?", [id]);
+        const user = await query("SELECT * FROM customer WHERE id=?", [id]);
+        const producer = await query("SELECT * FROM producer WHERE id=?", [id]);
 
         if (user.length > 0) {
             return res.status(200).json(user[0]);
