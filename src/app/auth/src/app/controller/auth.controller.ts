@@ -37,7 +37,7 @@ export const login = async (req: Request, res: Response) => {
 
       delete producer[0].password;
 
-      const { accessToken, refreshToken } = generateTokens(producer);
+      const { accessToken, refreshToken } = generateTokens(producer[0]);
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -58,7 +58,7 @@ export const login = async (req: Request, res: Response) => {
 
       delete customer[0].password;
 
-      const { accessToken, refreshToken } = generateTokens(customer);
+      const { accessToken, refreshToken } = generateTokens(customer[0]);
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
