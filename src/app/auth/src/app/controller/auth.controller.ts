@@ -126,8 +126,8 @@ export const registerCustomer = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await query("SELECT * FROM customers WHERE email=?", [email]);
-    const producer = await query("SELECT * FROM producers WHERE email=?", [
+    const user = await query("SELECT * FROM customer WHERE email=?", [email]);
+    const producer = await query("SELECT * FROM producer WHERE email=?", [
       email,
     ]);
 
