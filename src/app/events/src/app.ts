@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 
 import { connection } from "./app/db/database";
-
+import eventRouter from "./app/routes/events.router";
 import swaggerUI from "swagger-ui-express";
 
 import cors from 'cors';
@@ -37,6 +37,7 @@ export class App {
   }
 
   private router() {
+    this.server.use(eventRouter)
   }
 
   private swagger() {
