@@ -79,7 +79,7 @@ export class EventService {
     }
 
     public static async createEvent(event: EventType): Promise<EventType> {
-        const daysIds = await this.createItems<DaysType, Model<DaysType>>(event.days, daysModel);
+        const daysIds = await this.createItems<DaysType, Model<DaysType>>([event.days], daysModel);
         const lotsIds = await this.createItems<LotsType, Model<LotsType>>(event.lots, lotsModels);
         const vipAreaIds = await this.createItems<VIPAreaType, Model<VIPAreaType>>(event.VIPArea, vipareaModel);
 
@@ -120,7 +120,7 @@ export class EventService {
           item = item as unknown as LotsType;
           Logger.infoLog('Converting Data')
 
-          const variantId = await this.createItems<VariantType, Model<any>>(item.variant, variantModel);
+          const variantId: any = await this.createItems<VariantType, Model<any>>(item.variant, variantModel);
           item.variant = variantId;
           
           Logger.infoLog('Created Variant')

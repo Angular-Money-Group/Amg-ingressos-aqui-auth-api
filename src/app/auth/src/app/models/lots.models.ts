@@ -2,6 +2,7 @@ import { VariantType } from "./variant.model";
 import mongoose, { Document } from "mongoose";
 
 const lotsModel = new mongoose.Schema({
+    name: { type: String, required: true },
     description: { type: String, required: true },
     variant: { type: mongoose.Schema.Types.ObjectId, ref: 'Variant' },
     sellTicketsBeforeStartAnother: { type: Boolean, required: true },
@@ -11,6 +12,7 @@ const lotsModel = new mongoose.Schema({
 export default mongoose.model<LotsType>("Lots", lotsModel);
 
 export interface LotsType extends Document {
+    name: string;
     description: string;
     variant: VariantType[];
     sellTicketsBeforeStartAnother: boolean;
