@@ -59,7 +59,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const registerProducer = async (req: Request, res: Response) => {
-  const { manager, cnpj, email, password, name, phoneNumber, corporateName } =
+  const { manager, cnpj, email, password, phoneNumber, corporateName } =
     req.body;
 
   if (
@@ -67,7 +67,6 @@ export const registerProducer = async (req: Request, res: Response) => {
     !cnpj ||
     !email ||
     !password ||
-    !name ||
     !phoneNumber ||
     !corporateName
   ) {
@@ -83,7 +82,7 @@ export const registerProducer = async (req: Request, res: Response) => {
   }
 
   const hashPassword = await AuthService.hashPassword(password);
-  Logger.infoLog("Gen Passhash" + hashPassword);
+  Logger.infoLog("Gen Passhash " + hashPassword);
 
   const newProducer: any = await AuthService.createProducer({
     manager,
