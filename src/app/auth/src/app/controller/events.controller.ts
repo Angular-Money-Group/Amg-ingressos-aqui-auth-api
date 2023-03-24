@@ -112,3 +112,5 @@ export const getAllEvents = (req: Request, res: Response) => {
     return internalServerErrorResponse(res, error.message);
   }
 };
+
+export default { createEvent, findEventById, deleteEvent, getAllEvents };
