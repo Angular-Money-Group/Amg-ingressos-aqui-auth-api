@@ -1,43 +1,46 @@
 import { Request, Response } from "express";
-import { query } from "../db/database";
-import bcrypt from "bcrypt";
-import { generateTokens } from "../utils/autenticateToken.utils";
+import { AuthService } from "../services/auth.service";
+import { Logger } from "../services/logger.service";
+import { internalServerErrorResponse } from "../utils/responses.utils";
+import { CustomerType } from "./../models/customer.model";
+import { ProducerType } from "./../models/producer.models";
+import {
+  badRequestResponse,
+  successResponse,
+  unprocessableEntityResponse,
+} from "./../utils/responses.utils";
 
 export const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "Ah não! Parece que você não preencheu todos os campos",
-    });
-  }
-
   try {
-    const customer = await query("SELECT * FROM customer WHERE email=?", [
-      email,
-    ]);
-    const producer = await query("SELECT * FROM producer WHERE email=?", [
-      email,
-    ]);
+    const { email, password } = req.body;
 
-    if (customer.length === 0 && producer.length === 0) {
-      return res.status(400).json({
-        message: "Não foi possivel logar",
-      });
+    if (!email || !password) {
+      return unprocessableEntityResponse(res);
     }
 
-    if (producer.length > 0) {
-      const isMatch = await bcrypt.compare(password, producer[0].password);
+    const user: CustomerType | ProducerType =
+      (await AuthService.findCustomerByEmail(email)) ||
+      (await AuthService.findProducerByEmail(email));
+    if (!user) {
+      Logger.errorLog("User not found");
+      return badRequestResponse(res);
+    } else {
+      const isMatch = await AuthService.comparePassword(
+        password,
+        user.password as string
+      );
+      Logger.infoLog("Compare password result: " + isMatch);
 
       if (!isMatch) {
-        return res.status(400).json({
-          message: "Credenciais inválidas",
-        });
+        Logger.errorLog("Password not match");
+        return badRequestResponse(res);
       }
 
-      delete producer[0].password;
+      Logger.infoLog("Delete User password for generate tokens");
+      delete user.password;
 
-      const { accessToken, refreshToken } = generateTokens(producer[0]);
+      Logger.infoLog("Generate tokens");
+      const { accessToken, refreshToken } = AuthService.generateTokens(user);
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -45,51 +48,119 @@ export const login = async (req: Request, res: Response) => {
         sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
       });
+      Logger.infoLog("Send token to cookies");
 
-      return res.status(200).json({ accessToken });
-    } else if (customer.length > 0) {
-      const isMatch = await bcrypt.compare(password, customer[0].password);
-
-      if (!isMatch) {
-        return res.status(400).json({
-          message: "Credenciais inválidas",
-        });
-      }
-
-      delete customer[0].password;
-
-      const { accessToken, refreshToken } = generateTokens(customer[0]);
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
-      });
-
-      return res.status(200).json({ accessToken });
+      return successResponse(res, { accessToken });
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+  } catch (error: any) {
+    Logger.errorLog("Login error: " + error);
+    return internalServerErrorResponse(res, error.message);
   }
 };
 
-export const refreshToken = async (req: Request, res: Response) => {
-  const { refreshToken } = req.cookies;
+export const registerProducer = async (req: Request, res: Response) => {
+  const { manager, cnpj, email, password, name, phoneNumber, corporateName } =
+    req.body;
 
-  if (!refreshToken) {
-    return res.status(401).json({
-      message: "Unauthorized",
-    });
+  if (
+    !manager ||
+    !cnpj ||
+    !email ||
+    !password ||
+    !name ||
+    !phoneNumber ||
+    !corporateName
+  ) {
+    Logger.errorLog("Missing params");
+    return unprocessableEntityResponse(res);
   }
 
-  const refreshTokenReq = refreshToken;
+  const producer = await AuthService.findProducerByEmail(email);
 
+  if (producer) {
+    Logger.errorLog("Producer already exists");
+    return badRequestResponse(res);
+  }
+
+  const hashPassword = await AuthService.hashPassword(password);
+  Logger.infoLog("Gen Passhash" + hashPassword);
+
+  const newProducer: any = await AuthService.createProducer({
+    manager,
+    cnpj,
+    email,
+    password: hashPassword,
+    phoneNumber,
+    corporateName,
+    isPhoneVerified: false,
+    isEmailVerified: false,
+  });
+
+  if (!newProducer) {
+    Logger.errorLog("Producer not created");
+    return internalServerErrorResponse(res, "Producer not created");
+  }
+  Logger.infoLog("Producer created");
+
+  delete newProducer.password;
+  Logger.infoLog("Delete password from producer");
+
+  const { accessToken, refreshToken } = AuthService.generateTokens(newProducer);
+  Logger.infoLog("Generate tokens");
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
+  });
+  Logger.infoLog("Send token to cookies");
+
+  return successResponse(res, { accessToken, producer: newProducer });
+};
+
+export const registerCustomer = async (req: Request, res: Response) => {
   try {
-    const { accessToken, refreshToken } = generateTokens(refreshTokenReq);
+    const { name, cpf, email, password, phoneNumber } = req.body;
+
+    if (!name || !cpf || !email || !password || !phoneNumber) {
+      Logger.errorLog("Missing params");
+      return unprocessableEntityResponse(res);
+    }
+
+    const customer = await AuthService.findCustomerByEmail(email);
+
+    if (customer) {
+      Logger.errorLog("Customer already exists");
+      return badRequestResponse(res);
+    }
+
+    const hashPassword = await AuthService.hashPassword(password);
+    Logger.infoLog("Gen Passhash" + hashPassword);
+
+    const newCustomer: any = await AuthService.createCustomer({
+      name,
+      cpf,
+      email,
+      password: hashPassword,
+      phoneNumber,
+      isPhoneVerified: false,
+      isEmailVerified: false,
+    });
+
+    if (!newCustomer) {
+      Logger.errorLog("Customer not created");
+      return internalServerErrorResponse(res, "Customer not created");
+    }
+
+    Logger.infoLog("Customer created");
+
+    delete newCustomer.password;
+    Logger.infoLog("Delete password from customer");
+
+    const { accessToken, refreshToken } =
+      AuthService.generateTokens(newCustomer);
+    Logger.infoLog("Generate tokens");
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -97,156 +168,62 @@ export const refreshToken = async (req: Request, res: Response) => {
       sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
     });
+    Logger.infoLog("Send token to cookies");
 
-    return res.status(200).json({ accessToken });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    return successResponse(res, { accessToken, customer: newCustomer });
+  } catch (error: any) {
+    Logger.errorLog("Register customer error: " + error);
+    return internalServerErrorResponse(res, error.message);
   }
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
-  return res.status(200).json({ message: "Logout successfully" });
-};
-
-export const registerCustomer = async (req: Request, res: Response) => {
-  const { name, email, cpf, phoneNumber, password } = req.body;
-
-  if (!name || !email || !cpf || !phoneNumber || !password) {
-    return res.status(400).json({
-      message: "Ah não! Parece que você não preencheu todos os campos",
-    });
-  }
-
   try {
-    const user = await query("SELECT * FROM customer WHERE email=?", [email]);
-    const producer = await query("SELECT * FROM producer WHERE email=?", [
-      email,
-    ]);
-
-    if (user.length > 0 || producer.length > 0) {
-      return res.status(400).json({
-        message: "Não foi Possivel cadastrar o usuário",
-      });
-    }
-
-    const salt = await bcrypt.genSalt(16);
-    const hash = await bcrypt.hash(password, salt);
-
-    const newUser = {
-      name,
-      email,
-      cpf,
-      phoneNumber,
-      password: hash,
-      createdAt: new Date(),
-    };
-
-    const result = await query("INSERT INTO customer SET ?", [newUser]);
-
-    if (result.affectedRows === 1) {
-      const { accessToken, refreshToken } = generateTokens(newUser);
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
-      });
-
-      return res.status(200).json({ accessToken });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Server error",
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
     });
+    Logger.infoLog("Clear cookie");
+    return successResponse(res, {});
+  } catch (error: any) {
+    Logger.errorLog("Logout error: " + error.message);
+    return internalServerErrorResponse(res, error.message);
   }
 };
 
-export const registerProducer = async (req: Request, res: Response) => {
-  const { manager, email, cnpj, phoneNumber, corporateName, password } =
-    req.body;
-
+export const refreshToken = async (req: Request, res: Response) => {
   try {
-    if (
-      !manager ||
-      !email ||
-      !cnpj ||
-      !phoneNumber ||
-      !corporateName ||
-      !password
-    ) {
-      return res.status(400).json({
-        message: "Ah não! Parece que você não preencheu todos os campos",
-      });
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      Logger.errorLog("Refresh token not found");
+      return unprocessableEntityResponse(res);
     }
 
-    const salt = await bcrypt.genSalt(16);
-    const hash = await bcrypt.hash(password, salt);
+    const { accessToken, refreshToken: newRefreshToken } =
+      AuthService.generateTokens(refreshToken);
+    Logger.infoLog("Generate tokens");
 
-    const newUser = {
-      manager,
-      email,
-      cnpj,
-      phoneNumber,
-      corporateName,
-      password: hash,
-      createdAt: new Date(),
-    };
-
-    const result = await query("INSERT INTO producer SET ?", [newUser]);
-
-    if (result.affectedRows === 1) {
-      const { accessToken, refreshToken } = generateTokens(newUser);
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
-      });
-
-      return res.status(200).json({ accessToken });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Server error",
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
     });
+    Logger.infoLog("Send token to cookies");
+
+    return successResponse(res, { accessToken });
+  } catch (error: any) {
+    Logger.errorLog("Refresh token error: " + error.message);
+    return internalServerErrorResponse(res, error.message);
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    try {
-        const user = await query("SELECT * FROM customer WHERE id=?", [id]);
-        const producer = await query("SELECT * FROM producer WHERE id=?", [id]);
-
-        if (user.length > 0) {
-            return res.status(200).json(user[0]);
-        } else if (producer.length > 0) {
-            return res.status(200).json(producer[0]);
-        } else {
-            return res.status(404).json({
-                message: "Usuário não encontrado",
-            });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            message: "Server error",
-        });
-    }
+export default {
+  login,
+  refreshToken,
+  logout,
+  registerProducer,
+  registerCustomer,
 };
-
-
-export default { login, refreshToken, logout, registerCustomer, registerProducer, getUser };
