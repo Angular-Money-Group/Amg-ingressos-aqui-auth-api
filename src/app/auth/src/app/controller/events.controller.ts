@@ -20,11 +20,9 @@ export const createEvent = (req: Request, res: Response) => {
       !event.cep ||
       !event.address ||
       !event.number ||
-      !event.complement ||
       !event.neighborhood ||
       !event.city ||
       !event.state ||
-      !event.referencePoint ||
       !event.days ||
       !event.lots
     ) {
