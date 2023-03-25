@@ -81,7 +81,7 @@ export class AuthService {
   public static generateAccessToken(user: CustomerType | ProducerType): string {
     Logger.infoLog("Generate access token");
     return jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET!, {
-      expiresIn: "15m",
+      expiresIn: "2h",
     });
   }
 
