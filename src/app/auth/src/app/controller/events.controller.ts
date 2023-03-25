@@ -11,6 +11,8 @@ export const createEvent = (req: Request, res: Response) => {
   try {
     const event = req.body;
 
+    Logger.infoLog("Creating event: " + event);
+
     if (
       !event.name ||
       !event.local ||
