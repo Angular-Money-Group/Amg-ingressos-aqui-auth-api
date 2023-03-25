@@ -96,17 +96,17 @@ export class EventService {
 
   public static async createEvent(event: any): Promise<EventType> {
     Logger.infoLog("Creating Days: " + event.days);
-    const daysIds = await this.createItems<DaysType, Model<DaysType>>(
+    const daysIds = await this.createItems<Model<DaysType>>(
       event.days,
       daysModel
     );
     Logger.infoLog("Creating Lots: " + event.lots);
-    const lotsIds = await this.createItems<LotsType, Model<LotsType>>(
+    const lotsIds = await this.createItems<Model<LotsType>>(
       event.lots,
       lotsModels
     );
     Logger.infoLog("Creating VIPArea: " + event.VIPArea);
-    const vipAreaIds = await this.createItems<VIPAreaType, Model<VIPAreaType>>(
+    const vipAreaIds = await this.createItems<Model<VIPAreaType>>(
       event.VIPArea,
       vipareaModel
     );
@@ -139,20 +139,22 @@ export class EventService {
     return Promise.resolve(eventCreated);
   }
 
-  private static async createItems<T extends Document, M extends Model<T>>(
-    items: T[] | any[],
+  private static async createItems<M extends Model<any>>(
+    items: any[],
     model: M
   ): Promise<string[]> {
     const itemIds: string[] = [];
 
-    for await (let item of items) {
+    Logger.infoLog("Creating Items: " + items);
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
       if (model.modelName === "Lots") {
         Logger.infoLog("Create Lots Variant");
 
         item = item as unknown as LotsType;
         Logger.infoLog("Converting Data");
 
-        const variantId: any = await this.createItems<VariantType, Model<any>>(
+        const variantId: any = await this.createItems<Model<any>>(
           item.variant,
           variantModel
         );
@@ -191,8 +193,8 @@ export class EventService {
       const itemId = await new model(item).save();
 
       Logger.infoLog(`Create ${model.modelName}: ${item}`);
-
       Logger.infoLog("Push Item Id");
+
       itemIds.push(itemId._id.toString());
       Logger.infoLog(`Create ${model.modelName} id: ${itemId._id.toString()}`);
     }

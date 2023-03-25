@@ -7,7 +7,7 @@ const daysModel = new mongoose.Schema({
 
 export default mongoose.model<DaysType>("Days", daysModel);
 
-export interface DaysType extends Document{
+export interface DaysType{
     start: Date;
     end: Date;
   }

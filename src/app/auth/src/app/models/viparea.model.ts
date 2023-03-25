@@ -18,7 +18,7 @@ const vipAreaModel = new mongoose.Schema({
 
 export default mongoose.model<VIPAreaType>("VIPArea", vipAreaModel);
 
-export interface VIPAreaType extends Document {
+export interface VIPAreaType {
     id: string;
     name: string;
     description: string;

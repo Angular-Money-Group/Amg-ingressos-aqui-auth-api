@@ -11,7 +11,7 @@ const lotsModel = new mongoose.Schema({
 
 export default mongoose.model<LotsType>("Lots", lotsModel);
 
-export interface LotsType extends Document {
+export interface LotsType {
     name: string;
     description: string;
     variant: VariantType[];
