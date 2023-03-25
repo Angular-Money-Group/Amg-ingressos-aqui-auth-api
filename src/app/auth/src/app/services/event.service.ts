@@ -79,7 +79,7 @@ export class EventService {
         });
     }
 
-    public static async createEvent(event: EventType): Promise<EventType> {
+    public static async createEvent(event: any): Promise<EventType> {
         const daysIds = await this.createItems<DaysType, Model<DaysType>>([event.days], daysModel);
         const lotsIds = await this.createItems<LotsType, Model<LotsType>>(event.lots, lotsModels);
         const vipAreaIds = await this.createItems<VIPAreaType, Model<VIPAreaType>>(event.VIPArea, vipareaModel);

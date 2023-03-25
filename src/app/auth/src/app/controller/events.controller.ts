@@ -1,3 +1,4 @@
+import { VIPAreaType } from "./../models/viparea.model";
 import { Request, Response } from "express";
 import { EventService } from "../services/event.service";
 import { Logger } from "./../services/logger.service";
@@ -9,30 +10,84 @@ import {
 
 export const createEvent = (req: Request, res: Response) => {
   try {
-    const event = req.body;
+    const {
+      name,
+      local,
+      type,
+      image,
+      description,
+      cep,
+      address,
+      number,
+      neighborhood,
+      complement,
+      referencePoint,
+      city,
+      state,
+      days,
+      lots,
+      VIPArea,
+    } = req.body;
 
-    Logger.infoLog("Creating event: " + event);
+    Logger.infoLog(
+      "Creating event: " +
+        {
+          name,
+          local,
+          type,
+          image,
+          description,
+          cep,
+          address,
+          number,
+          neighborhood,
+          referencePoint,
+          complement,
+          city,
+          state,
+          days,
+          lots,
+          VIPArea,
+        }
+    );
 
     if (
-      !event.name ||
-      !event.local ||
-      !event.type ||
-      !event.image ||
-      !event.description ||
-      !event.cep ||
-      !event.address ||
-      !event.number ||
-      !event.neighborhood ||
-      !event.city ||
-      !event.state ||
-      !event.days ||
-      !event.lots
+      !name ||
+      !local ||
+      !type ||
+      !image ||
+      !description ||
+      !cep ||
+      !address ||
+      !number ||
+      !neighborhood ||
+      !city ||
+      !state ||
+      !days ||
+      !lots
     ) {
       Logger.errorLog("Missing fields");
       return unprocessableEntityResponse(res);
     }
 
-    EventService.createEvent(event)
+    EventService.createEvent({
+      name,
+      local,
+      type,
+      image,
+      description,
+      cep,
+      address,
+      number,
+      referencePoint,
+      complement,
+      neighborhood,
+      city,
+      state,
+      days,
+      lots,
+      VIPArea,
+    })
       .then((result) => {
         Logger.infoLog("Event created: " + result);
         return successResponse(res, result);
