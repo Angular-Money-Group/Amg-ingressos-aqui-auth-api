@@ -146,8 +146,7 @@ export class EventService {
     const itemIds: string[] = [];
 
     Logger.infoLog("Creating Items: " + items);
-    for (let i = 0; i < items.length; i++) {
-      let item = items[i];
+    for await (let item of items) {
       if (model.modelName === "Lots") {
         Logger.infoLog("Create Lots Variant");
 
