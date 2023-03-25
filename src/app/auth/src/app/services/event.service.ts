@@ -186,9 +186,13 @@ export class EventService {
         Logger.infoLog("Created VIPArea Variant " + item);
       }
 
+
+      Logger.infoLog("Create Item");
       const itemId = await new model(item).save();
+
       Logger.infoLog(`Create ${model.modelName}: ${item}`);
 
+      Logger.infoLog("Push Item Id");
       itemIds.push(itemId._id.toString());
       Logger.infoLog(`Create ${model.modelName} id: ${itemId._id.toString()}`);
     }
