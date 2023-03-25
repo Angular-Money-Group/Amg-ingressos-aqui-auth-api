@@ -26,8 +26,7 @@ export const createEvent = (req: Request, res: Response) => {
       !event.state ||
       !event.referencePoint ||
       !event.days ||
-      !event.lots ||
-      !event.VIPArea
+      !event.lots
     ) {
       Logger.errorLog("Missing fields");
       return unprocessableEntityResponse(res);
