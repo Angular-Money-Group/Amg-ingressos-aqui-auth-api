@@ -1,3 +1,4 @@
+import { TicketsAreas } from './../models/ticketsArea.models';
 import { DBOperators } from './../db/operations.db';
 import { Document, Model } from 'mongoose';
 import EventModel, { EventType } from "../models/event.models";
@@ -125,6 +126,31 @@ export class EventService {
           
           Logger.infoLog('Created Variant')
         }
+
+        if(model.modelName === 'VIPArea') {
+          Logger.infoLog('Create VIPArea Variant')
+          item = item as unknown as VIPAreaType;
+          Logger.infoLog('Converting Data')
+          let ticketsAreaArray = []
+
+          for await (let ticketsArea of item.ticketsArea) {
+            Logger.infoLog('Create TicketsArea')
+            const ticket = {
+              position: ticketsArea,
+              isReserved: false,
+              isSold: false,
+            }
+
+            Logger.infoLog('Created TicketsArea ' + ticket)
+
+            ticketsAreaArray.push(ticket)
+        }
+
+        Logger.infoLog('Created TicketsArea Array ' + ticketsAreaArray)
+        item.ticketsArea = ticketsAreaArray
+
+        Logger.infoLog('Created VIPArea Variant ' + item)
+      }
 
         const itemId = await new model(item).save();
         Logger.infoLog(`Create ${model.modelName}: ${item}`);
