@@ -1,5 +1,10 @@
+import { Logger } from './app/services/logger.service';
 import { App } from "./app"
 
-new App().server.listen(3002, () => {
-    console.log("Server is running on port 3002");
+const port = 3001;
+
+new App().server.listen(port, () => {
+    Logger.infoLog(`Server running on port ${port}`);
+}).on('error', (err) => {
+    Logger.errorLog(`Server error: ${err.message}`);
 });

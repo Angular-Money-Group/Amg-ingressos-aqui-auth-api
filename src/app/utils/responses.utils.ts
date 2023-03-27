@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Logger } from '../services/logger.service';
 
 export const successResponse = (res: Response, data: any) => {
     return res.status(200).json({ message: 'Operação Realizada com sucesso', data });
