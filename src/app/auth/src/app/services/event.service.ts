@@ -15,7 +15,6 @@ export class EventService {
       .populate("days")
       .populate("lots")
       .populate("VIPArea")
-      .populate("producer")
       .exec()
       .then((result) => {
         Logger.infoLog("Get all events result: " + result);
@@ -95,30 +94,37 @@ export class EventService {
   }
 
   public static async createEvent(event: any): Promise<EventType> {
+
+    let vipAreaIds: string[] = []
+
     Logger.infoLog("Creating Days: " + event.days);
     const daysIds = await this.createItems<Model<DaysType>>(
       event.days,
       daysModel
     );
+    
     Logger.infoLog("Creating Lots: " + event.lots);
     const lotsIds = await this.createItems<Model<LotsType>>(
       event.lots,
       lotsModels
     );
-    Logger.infoLog("Creating VIPArea: " + event.VIPArea);
-    const vipAreaIds = await this.createItems<Model<VIPAreaType>>(
-      event.VIPArea,
-      vipareaModel
-    );
 
-    Logger.infoLog(
-      `Created Relations: daysIds: ${daysIds}, lotsIds: ${lotsIds}, vipAreaIds: ${vipAreaIds}`
-    );
+    if(event.VIPArea && event.VIPArea.length > 0){
+      Logger.infoLog("Creating VIPArea: " + event.VIPArea);
+      vipAreaIds = await this.createItems<Model<VIPAreaType>>(
+        event.VIPArea,
+        vipareaModel
+        );
+        
+        Logger.infoLog(
+          `Created Relations: daysIds: ${daysIds}, lotsIds: ${lotsIds}, vipAreaIds: ${vipAreaIds}`
+          );
+        }
 
     const eventCreated = await new EventModel({
       name: event.name,
       local: event.local,
-      type: event.type,
+      type: event.type.name,
       image: event.image,
       description: event.description,
       cep: event.cep,
@@ -146,7 +152,8 @@ export class EventService {
     const itemIds: string[] = [];
 
     Logger.infoLog("Creating Items: " + items);
-    for await (let item of items) {
+    for (let item of items) {
+
       if (model.modelName === "Lots") {
         Logger.infoLog("Create Lots Variant");
 

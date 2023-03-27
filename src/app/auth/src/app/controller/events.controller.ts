@@ -29,26 +29,30 @@ export const createEvent = (req: Request, res: Response) => {
       VIPArea,
     } = req.body;
 
+    const event = {
+      name,
+      local,
+      type,
+      image,
+      description,
+      cep,
+      address,
+      number,
+      neighborhood,
+      complement,
+      referencePoint,
+      city,
+      state,
+      days,
+      lots,
+      VIPArea,
+    }
+
+    console.log(event)
+
     Logger.infoLog(
       "Creating event: " +
-        {
-          name,
-          local,
-          type,
-          image,
-          description,
-          cep,
-          address,
-          number,
-          neighborhood,
-          referencePoint,
-          complement,
-          city,
-          state,
-          days,
-          lots,
-          VIPArea,
-        }
+      event.toString()
     );
 
     if (
@@ -70,24 +74,7 @@ export const createEvent = (req: Request, res: Response) => {
       return unprocessableEntityResponse(res);
     }
 
-    EventService.createEvent({
-      name,
-      local,
-      type,
-      image,
-      description,
-      cep,
-      address,
-      number,
-      referencePoint,
-      complement,
-      neighborhood,
-      city,
-      state,
-      days,
-      lots,
-      VIPArea,
-    })
+    EventService.createEvent(event)
       .then((result) => {
         Logger.infoLog("Event created: " + result);
         return successResponse(res, result);

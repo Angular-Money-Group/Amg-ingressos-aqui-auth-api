@@ -18,7 +18,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         Logger.errorLog("Error verifying token: " + err);
         return forbiddenResponse(res)
       }
-      req.body.userId = payload.user._Id;
+      req.body.userId = payload.user.id;
       Logger.infoLog("User Id: " + req.body.userId);
       next();
     });
