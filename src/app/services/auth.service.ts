@@ -123,7 +123,7 @@ export class AuthService {
       });
   }
 
-  public async changePassword(id: string, newPassword: string, userType: string){
+  public static async changePassword(id: string, newPassword: string, userType: string){
     if(userType === 'Customer'){
       await OperationsDB.updateItems(id, newPassword, customerModel)
     } 

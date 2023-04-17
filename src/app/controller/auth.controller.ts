@@ -1,6 +1,6 @@
-import { EmailService } from "./../services/emails.service";
+import EmailService from "./../services/emails.service";
 import { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
+import authService, { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
 import { internalServerErrorResponse } from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";
@@ -142,7 +142,10 @@ export class AuthController {
 
       const customer = await AuthService.findUserByEmail(email, customerModel);
 
-      const isProducer = await AuthService.findUserByEmail(email, producerModels);
+      const isProducer = await AuthService.findUserByEmail(
+        email,
+        producerModels
+      );
 
       if (customer || isProducer) {
         Logger.errorLog("Customer already exists");
@@ -234,10 +237,9 @@ export class AuthController {
   public async resendEmail(req: Request, res: Response) {
     Logger.infoLog("Finding User");
 
-    const user: any = Promise.all([
-      AuthService.findUserByEmail(req.body.email, customerModel),
-      AuthService.findUserByEmail(req.body.email, producerModels),
-    ]);
+    let user = await AuthService.findUserByEmail(req.body.email, customerModel)
+
+    if(!user) user = await AuthService.findUserByEmail(req.body.email, producerModels)
 
     if (!user) {
       Logger.errorLog("User not found");
@@ -296,5 +298,30 @@ export class AuthController {
     } catch (err: any) {
       internalServerErrorResponse(res, err);
     }
+  }
+
+  public async forgotPassword(req: Request, res: Response) {
+    const { email } = req.body;
+
+    const emailService = new EmailService();
+    await emailService.sendEmailForForgotPassword(email);
+
+    return successResponse(res, null);
+  }
+
+  public async resetPassword(req: Request, res: Response) {
+    const id = req.params.id;
+    const { newPassword, userType } = req.body;
+
+    const hashPassword = await AuthService.hashPassword(newPassword);
+    Logger.infoLog("Gen Passhash " + hashPassword);
+
+    await AuthService.changePassword(id, hashPassword, userType)
+      .then(() => {
+        successResponse(res, null);
+      })
+      .catch((err) => {
+        internalServerErrorResponse(res, err);
+      });
   }
 }

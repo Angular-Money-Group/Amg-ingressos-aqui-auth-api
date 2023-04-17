@@ -1,22 +1,22 @@
-import { Logger } from './app/services/logger.service';
-import express from "express";
 import dotenv from "dotenv";
-
-import { connection } from "./app/db/database";
-
-import swaggerUI from "swagger-ui-express";
-
-import {AuthRouter} from "./app/routes/auth.router";
+import express from "express";
 import cors from 'cors';
 import eventRouter from "./app/routes/events.router";
-import mongoose from 'mongoose';
+import { Logger } from './app/services/logger.service';
+import { connection } from "./app/db/database";
+import { AuthRouter } from "./app/routes/auth.router";
+import swaggerDocs from "./swagger";
+
 dotenv.config();
 
 export class App {
-  public server: express.Application;
+  public server: any
 
   constructor(private authRouter: AuthRouter) {
     this.server = express();
+
+    swaggerDocs(this.server, 3001);
+
     this.swagger();
     this.middleware();
     this.router();
