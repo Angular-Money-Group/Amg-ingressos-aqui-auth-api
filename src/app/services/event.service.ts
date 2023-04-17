@@ -1,11 +1,9 @@
-import { TicketsAreas } from "./../models/ticketsArea.models";
-import { DBOperators } from "./../db/operations.db";
-import { Document, Model } from "mongoose";
+import { Model } from "mongoose";
+import { OperationsDB } from "../db/operations.db";
 import EventModel, { EventType } from "../models/event.models";
 import variantModel from "../models/variant.model";
 import daysModel, { DaysType } from "./../models/days.models";
 import lotsModels, { LotsType } from "./../models/lots.models";
-import { VariantType } from "./../models/variant.model";
 import vipareaModel, { VIPAreaType } from "./../models/viparea.model";
 import { Logger } from "./logger.service";
 
@@ -31,7 +29,6 @@ export class EventService {
       .populate("days")
       .populate("lots")
       .populate("VIPArea")
-      .populate("producer")
       .exec()
       .then((result) => {
         Logger.infoLog("Find event by id result: " + result);
@@ -82,12 +79,12 @@ export class EventService {
   }
 
   public static async deleteEvent(id: string): Promise<any> {
-    return DBOperators.deleteItem<any>(id, EventModel)
-      .then((result) => {
+    return OperationsDB.deleteItems<any>(id, EventModel)
+      .then((result: any) => {
         Logger.infoLog("Delete event result: " + result);
         return result;
       })
-      .catch((error) => {
+      .catch((error: any) => {
         Logger.errorLog("Delete event error: " + error);
         return error;
       });

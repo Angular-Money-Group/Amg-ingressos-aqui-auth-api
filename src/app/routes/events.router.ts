@@ -9,4 +9,4 @@ eventRouter.get('/getEventById/:id', authenticateToken, verifyTokenPermission, f
 eventRouter.post('/createEvent', authenticateToken, verifyTokenPermission, createEvent);
 eventRouter.put('/deleteEvent/:id', authenticateToken, verifyTokenPermission, deleteEvent);
 
-export default eventRouter;""
+export default eventRouter;

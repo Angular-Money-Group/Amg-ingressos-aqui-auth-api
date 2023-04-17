@@ -6,15 +6,16 @@ import { connection } from "./app/db/database";
 
 import swaggerUI from "swagger-ui-express";
 
-import authRouter from "./app/routes/auth.router";
+import {AuthRouter} from "./app/routes/auth.router";
 import cors from 'cors';
 import eventRouter from "./app/routes/events.router";
+import mongoose from 'mongoose';
 dotenv.config();
 
 export class App {
   public server: express.Application;
 
-  constructor() {
+  constructor(private authRouter: AuthRouter) {
     this.server = express();
     this.swagger();
     this.middleware();
@@ -43,7 +44,7 @@ export class App {
 
   private router() {
     Logger.infoLog("Loading routes");
-    this.server.use(authRouter)
+    this.server.use(this.authRouter.authRouter)
     this.server.use(eventRouter)
   }
 

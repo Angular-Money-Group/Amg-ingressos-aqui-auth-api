@@ -1,7 +1,5 @@
 export class Logger {
 
-    constructor() {}
-
     public static infoLog(message: string) {
         console.log('[INFO]: ' + message);
     }

@@ -1,50 +1,36 @@
-import { ProducerType } from "./../models/producer.models";
-import { Document, Model } from "mongoose";
-import { CustomerType } from "./../models/customer.model";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { Logger } from "./logger.service";
-import ProducerModel  from "../models/producer.models";
+import jwt from "jsonwebtoken";
+import { OperationsDB } from "../db/operations.db";
 import CustomerModel from "../models/customer.model";
+import ProducerModel from "../models/producer.models";
+import customerModel, { CustomerType } from "./../models/customer.model";
+import { ProducerType } from "./../models/producer.models";
+import { Logger } from "./logger.service";
+import { Model } from "mongoose";
 
 dotenv.config();
 
 export class AuthService {
+  private static accessTokenSecret = process.env.ACCESS_TOKEN_SECRET!;
+  private static refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET!;
 
-  constructor(
-  ) {}
-
-  public static async findCustomerByEmail(value: string): Promise<any> {
-    Logger.infoLog("Find customer by email");
-    return CustomerModel
-      .findOne({ email: value })
-      .exec()
-      .then((result) => {
-        Logger.infoLog("Find customer by email result: " + result);
-        return result;
+  public static async findUserByEmail<M extends Model<any>>(value: string, model: M): Promise<any> {
+    Logger.infoLog(`Find ${model.modelName} by email`);
+    const user: any = await OperationsDB.findByEmail(value, model)
+      .then((result: any) => {
+        Logger.infoLog(`Find ${model.modelName} by email result: ` + result);
+        return Promise.resolve(result);
       })
       .catch((error) => {
-        Logger.errorLog("Find customer by email error: " + error);
-        return error;
+        Logger.errorLog(`Find ${model.modelName} by email error: ` + error);
+        return Promise.reject(error);
       });
+
+    return Promise.resolve(user);
   }
 
-  public static async findProducerByEmail(value: string): Promise<any> {
-    return ProducerModel
-      .findOne({ email: value })
-      .exec()
-      .then((result) => {
-        Logger.infoLog("Find producer by email result: " + result);
-        return result;
-      })
-      .catch((error) => {
-        Logger.errorLog("Find producer by email error: " + error);
-        return error;
-      });
-  }
-
-  public static comparePassword(
+  public static async comparePassword(
     password: string,
     hash: string
   ): Promise<boolean> {
@@ -60,36 +46,38 @@ export class AuthService {
       });
   }
 
-  public static generateTokens(user: CustomerType | ProducerType): {
-    accessToken: string;
-    refreshToken: string;
-  } {
-    const accessToken = this.generateAccessToken(user);
-    const refreshToken = this.generateRefreshToken(user);
+  public static async generateTokens(user: CustomerType | ProducerType) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateAccessToken(user),
+      this.generateRefreshToken(user),
+    ]);
     return { accessToken, refreshToken };
   }
 
-  public static verifyAccessToken(token: string): any {
-    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!);
+  public static verifyAccessToken(token: string): string | object {
+    Logger.infoLog("Verify Access token");
+    return jwt.verify(token, this.accessTokenSecret);
   }
 
-  public static verifyRefreshToken(token: string): any {
+  public static verifyRefreshToken(token: string): string | object {
     Logger.infoLog("Verify refresh token");
-    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!);
+    return jwt.verify(token, this.refreshTokenSecret);
   }
 
-  public static generateAccessToken(user: CustomerType | ProducerType): string {
+  public static async generateAccessToken(user: CustomerType | ProducerType) {
     Logger.infoLog("Generate access token");
-    return jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET!, {
+    const accessToken = await jwt.sign({ user }, this.accessTokenSecret, {
       expiresIn: "2h",
     });
+    return accessToken;
   }
 
-  public static generateRefreshToken(user: CustomerType | ProducerType): string {
+  public static async generateRefreshToken(user: CustomerType | ProducerType) {
     Logger.infoLog("Generate refresh token");
-    return jwt.sign({ user }, process.env.REFRESH_TOKEN_SECRET!, {
+    const refreshToken = await jwt.sign({ user }, this.refreshTokenSecret, {
       expiresIn: "7d",
     });
+    return refreshToken;
   }
 
   public static decodeToken(token: string): any {
@@ -111,12 +99,8 @@ export class AuthService {
       });
   }
 
-  public static async createCustomer(
-    customer: CustomerType
-  ): Promise<Document> {
-    const newCustomer = new CustomerModel(customer);
-    return await newCustomer
-      .save()
+  public static async createCustomer(customer: CustomerType): Promise<any> {
+    return await OperationsDB.registerItem(customer, CustomerModel)
       .then((result) => {
         Logger.infoLog("Create customer result: " + result);
         return result;
@@ -127,12 +111,8 @@ export class AuthService {
       });
   }
 
-  public static async createProducer(
-    producer: ProducerType
-  ): Promise<Document> {
-    const newProducer = await new ProducerModel(producer);
-    return await newProducer
-      .save()
+  public static async createProducer(producer: ProducerType): Promise<any> {
+    return await OperationsDB.registerItem(producer, ProducerModel)
       .then((result) => {
         Logger.infoLog("Create producer result: " + result);
         return result;
@@ -141,6 +121,17 @@ export class AuthService {
         Logger.errorLog("Create producer error: " + error);
         return error;
       });
+  }
+
+  public async changePassword(id: string, newPassword: string, userType: string){
+    if(userType === 'Customer'){
+      await OperationsDB.updateItems(id, newPassword, customerModel)
+    } 
+
+    if(userType == 'Producer'){
+      await OperationsDB.updateItems(id, newPassword, ProducerModel)
+    }
+
   }
 }
 

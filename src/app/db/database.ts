@@ -4,8 +4,8 @@ import { Logger } from '../services/logger.service';
 
 dotenv.config();
 
-export const connection = () => {
-    mongoose
+export const connection = async () => {
+   await mongoose
     .connect(process.env.DB_CONNECTION!)
     .then(() => Logger.infoLog("Conectado ao MongoDB"))
     .catch((err) => Logger.errorLog("Erro ao conectar ao MongoDB: " + err));

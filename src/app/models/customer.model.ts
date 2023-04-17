@@ -1,13 +1,18 @@
 import mongoose from "mongoose";
 
+
 const customerModel = new mongoose.Schema({
-    name: { type: String, required: true },
-    cpf: { type: String, required: true },
-    email: { type: String, required: true },
-    password: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    isPhoneVerified: { type: Boolean, required: true },
-    isEmailVerified: { type: Boolean, required: true },
+  name: { type: String, required: true },
+  cpf: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  isPhoneVerified: { type: Boolean, required: true },
+  isEmailVerified: { type: Boolean, required: true },
+  emailConfirmationCode: { 
+    code: { type: String },
+    expirationDate: {type: Date } 
+   },
 });
 
 export default mongoose.model("Customer", customerModel);

@@ -1,4 +1,3 @@
-import { VIPAreaType } from "./../models/viparea.model";
 import { Request, Response } from "express";
 import { EventService } from "../services/event.service";
 import { Logger } from "./../services/logger.service";
@@ -47,8 +46,6 @@ export const createEvent = (req: Request, res: Response) => {
       lots,
       VIPArea,
     }
-
-    console.log(event)
 
     Logger.infoLog(
       "Creating event: " +

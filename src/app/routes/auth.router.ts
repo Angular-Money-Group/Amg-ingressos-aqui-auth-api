@@ -1,13 +1,21 @@
+import { AuthController } from "./../controller/auth.controller";
 import { Router } from "express";
 
-import AuthController from "../controller/auth.controller";
+export class AuthRouter {
+  public authRouter = Router();
 
-const authRouter = Router();
-
-authRouter.get("/logout", AuthController.logout);
-authRouter.post("/login", AuthController.login);
-authRouter.post("/registerCustomer", AuthController.registerCustomer);
-authRouter.post("/registerProducer", AuthController.registerProducer);
-authRouter.post("/refreshToken", AuthController.refreshToken);
-
-export default authRouter;
+  constructor(private authController: AuthController) {
+    this.authRouter.get("/logout", this.authController.logout);
+    this.authRouter.post("/login", this.authController.login);
+    this.authRouter.post(
+      "/registerCustomer",
+      this.authController.registerCustomer
+    );
+    this.authRouter.post(
+      "/registerProducer",
+      this.authController.registerProducer
+    );
+    this.authRouter.post("/refreshToken", this.authController.refreshToken);
+    this.authRouter.post("/confirmEmail/:id", this.authController.confirmationEmail)
+  }
+}
