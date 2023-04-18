@@ -47,10 +47,10 @@ export class AuthService {
   }
 
   public static async generateTokens(user: CustomerType | ProducerType) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.generateAccessToken(user),
-      this.generateRefreshToken(user),
-    ]);
+    const accessToken = await this.generateAccessToken(user)
+    const refreshToken = await this.generateRefreshToken(user)
+
+    Logger.infoLog('Tokens' + { accessToken, refreshToken})
     return { accessToken, refreshToken };
   }
 
