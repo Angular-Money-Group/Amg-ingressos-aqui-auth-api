@@ -124,7 +124,9 @@ export class AuthController {
       delete newProducer.password;
       Logger.infoLog("Delete password from producer");
 
-      return successResponse(res, { producer: newProducer });
+      const userToken = await AuthService.generateAccessToken(newProducer)
+
+      return successResponse(res, { producer: newProducer, userToken });
     } catch (err: any) {
       Logger.errorLog("Login error: " + err.message);
       internalServerErrorResponse(res, err.message);
@@ -184,7 +186,9 @@ export class AuthController {
       delete newCustomer.password;
       Logger.infoLog("Delete password from customer");
 
-      return successResponse(res, { customer: newCustomer });
+      const userToken = await AuthService.generateAccessToken(newCustomer)
+
+      return successResponse(res, { customer: newCustomer, userToken });
     } catch (error: any) {
       Logger.errorLog("Register customer error: " + error);
       return internalServerErrorResponse(res, error.message);
