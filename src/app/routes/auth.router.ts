@@ -29,7 +29,7 @@ export class AuthRouter {
      *       200:
      *         description: Email enviado
      */
-    this.authRouter.get("/forgotPassword", this.authController.forgotPassword)
+    this.authRouter.post("/forgotPassword", this.authController.forgotPassword)
     
         /**
      * @openapi

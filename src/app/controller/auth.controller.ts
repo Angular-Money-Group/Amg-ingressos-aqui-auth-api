@@ -31,8 +31,6 @@ export class AuthController {
       user = user.find((userData: any) => {
         return userData
       })
-
-      console.log(user)
       
       if (!user) {
         Logger.errorLog("User not found");
