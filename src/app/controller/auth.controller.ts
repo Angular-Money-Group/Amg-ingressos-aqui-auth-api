@@ -22,11 +22,18 @@ export class AuthController {
         return unprocessableEntityResponse(res);
       }
 
-      const user: any = Promise.all([
+      let user: any = await Promise.all([
         AuthService.findUserByEmail(email, customerModel),
         AuthService.findUserByEmail(email, producerModels),
       ]);
 
+      
+      user = user.find((userData: any) => {
+        return userData
+      })
+
+      console.log(user)
+      
       if (!user) {
         Logger.errorLog("User not found");
         return badRequestResponse(res);

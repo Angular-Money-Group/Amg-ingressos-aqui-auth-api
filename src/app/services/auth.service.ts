@@ -34,15 +34,15 @@ export class AuthService {
     password: string,
     hash: string
   ): Promise<boolean> {
-    return bcrypt
+    return await bcrypt
       .compare(password, hash)
       .then((result) => {
         Logger.infoLog("Compare password result: " + result);
-        return result;
+        return Promise.resolve(result);
       })
       .catch((error) => {
         Logger.errorLog("Compare password error: " + error);
-        return error;
+        return Promise.reject(error);
       });
   }
 
