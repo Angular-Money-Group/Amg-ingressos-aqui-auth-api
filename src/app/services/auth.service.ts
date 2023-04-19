@@ -15,7 +15,10 @@ export class AuthService {
   private static accessTokenSecret = process.env.ACCESS_TOKEN_SECRET!;
   private static refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET!;
 
-  public static async findUserByEmail<M extends Model<any>>(value: string, model: M): Promise<any> {
+  public static async findUserByEmail<M extends Model<any>>(
+    value: string,
+    model: M
+  ): Promise<any> {
     Logger.infoLog(`Find ${model.modelName} by email`);
     const user: any = await OperationsDB.findByEmail(value, model)
       .then((result: any) => {
@@ -47,10 +50,10 @@ export class AuthService {
   }
 
   public static async generateTokens(user: CustomerType | ProducerType) {
-    const accessToken = await this.generateAccessToken(user)
-    const refreshToken = await this.generateRefreshToken(user)
+    const accessToken = await this.generateAccessToken(user);
+    const refreshToken = await this.generateRefreshToken(user);
 
-    Logger.infoLog('Tokens' + { accessToken, refreshToken})
+    Logger.infoLog("Tokens" + { accessToken, refreshToken });
     return { accessToken, refreshToken };
   }
 
@@ -64,7 +67,7 @@ export class AuthService {
     return jwt.verify(token, this.refreshTokenSecret);
   }
 
-  public static async generateAccessToken(user: CustomerType | ProducerType) {
+  public static async generateAccessToken(user: any) {
     Logger.infoLog("Generate access token");
     const accessToken = await jwt.sign({ user }, this.accessTokenSecret, {
       expiresIn: "2h",
@@ -123,15 +126,26 @@ export class AuthService {
       });
   }
 
-  public static async changePassword(id: string, newPassword: string, userType: string){
-    if(userType === 'Customer'){
-      await OperationsDB.updateItems(id, newPassword, customerModel)
-    } 
-
-    if(userType == 'Producer'){
-      await OperationsDB.updateItems(id, newPassword, ProducerModel)
+  public static async changePassword(
+    id: string,
+    newPassword: string,
+    userType: string
+  ) {
+    if (userType === "Customer") {
+      await OperationsDB.updateItems(id, {password: newPassword}, customerModel).then(
+        (update: any) => {
+          return Promise.resolve(update);
+        }
+      );
+    } else if (userType == "Producer") {
+      await OperationsDB.updateItems(id, {password: newPassword}, ProducerModel).then(
+        (update: any) => {
+          return Promise.resolve(update);
+        }
+      );
+    } else {
+      return Promise.reject();
     }
-
   }
 }
 

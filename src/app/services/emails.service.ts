@@ -124,11 +124,11 @@ export class EmailService {
     const producer = await OperationsDB.findByEmail(email, producerModels);
 
     if (customer) {
-      this.userInformation = await AuthService.generateAccessToken(customer);
+      this.userInformation = await AuthService.generateAccessToken({customer, userType: 'Customer' });
     }
 
     if (producer) {
-      this.userInformation = await AuthService.generateAccessToken(producer);
+      this.userInformation = await AuthService.generateAccessToken({producer, userType: 'Producer' });
     }
 
     const html = `

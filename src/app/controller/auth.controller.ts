@@ -27,11 +27,10 @@ export class AuthController {
         AuthService.findUserByEmail(email, producerModels),
       ]);
 
-      
       user = user.find((userData: any) => {
-        return userData
-      })
-      
+        return userData;
+      });
+
       if (!user) {
         Logger.errorLog("User not found");
         return badRequestResponse(res);
@@ -48,7 +47,12 @@ export class AuthController {
         }
 
         Logger.infoLog("Delete User password for generate tokens");
+        
+        
         delete user.password;
+
+        if (user.password) user.password = undefined;
+        Logger.infoLog(user);
 
         Logger.infoLog("Generate tokens");
         const { accessToken, refreshToken } = await AuthService.generateTokens(
@@ -127,9 +131,10 @@ export class AuthController {
       );
 
       delete newProducer.password;
+      if (newProducer.password) newProducer.password = undefined;
       Logger.infoLog("Delete password from producer");
 
-      const userToken = await AuthService.generateAccessToken(newProducer)
+      const userToken = await AuthService.generateAccessToken(newProducer);
 
       return successResponse(res, { producer: newProducer, userToken });
     } catch (err: any) {
@@ -189,9 +194,13 @@ export class AuthController {
       );
 
       delete newCustomer.password;
+
+      if (newCustomer.password) newCustomer.password = undefined;
       Logger.infoLog("Delete password from customer");
 
-      const userToken = await AuthService.generateAccessToken(newCustomer)
+      Logger.infoLog(newCustomer);
+
+      const userToken = await AuthService.generateAccessToken(newCustomer);
 
       return successResponse(res, { customer: newCustomer, userToken });
     } catch (error: any) {
@@ -246,9 +255,10 @@ export class AuthController {
   public async resendEmail(req: Request, res: Response) {
     Logger.infoLog("Finding User");
 
-    let user = await AuthService.findUserByEmail(req.body.email, customerModel)
+    let user = await AuthService.findUserByEmail(req.body.email, customerModel);
 
-    if(!user) user = await AuthService.findUserByEmail(req.body.email, producerModels)
+    if (!user)
+      user = await AuthService.findUserByEmail(req.body.email, producerModels);
 
     if (!user) {
       Logger.errorLog("User not found");
@@ -265,7 +275,7 @@ export class AuthController {
         producerModels
       );
 
-      return successResponse(res, null);
+      return successResponse(res, undefined);
     }
   }
 
@@ -286,7 +296,7 @@ export class AuthController {
         await emailService
           .confirmationEmail(userID, codeConfirmation, customerModel)
           .then(() => {
-            successResponse(res, null);
+            successResponse(res, undefined);
           })
           .catch((err: any) => {
             badRequestResponse(res);
@@ -298,7 +308,7 @@ export class AuthController {
         await emailService
           .confirmationEmail(userID, codeConfirmation, producerModels)
           .then(() => {
-            successResponse(res, null);
+            successResponse(res, undefined);
           })
           .catch((err: any) => {
             badRequestResponse(res);
@@ -315,22 +325,29 @@ export class AuthController {
     const emailService = new EmailService();
     await emailService.sendEmailForForgotPassword(email);
 
-    return successResponse(res, null);
+    return successResponse(res, undefined);
   }
 
   public async resetPassword(req: Request, res: Response) {
     const id = req.params.id;
     const { newPassword, userType } = req.body;
 
+    if (!userType || !newPassword || !id) {
+      return unprocessableEntityResponse(res);
+    }
+
+    Logger.infoLog("Gerando Passhash");
     const hashPassword = await AuthService.hashPassword(newPassword);
     Logger.infoLog("Gen Passhash " + hashPassword);
 
     await AuthService.changePassword(id, hashPassword, userType)
       .then(() => {
-        successResponse(res, null);
+        Logger.infoLog("Operação realizada com sucesso");
+        successResponse(res, undefined);
       })
       .catch((err) => {
-        internalServerErrorResponse(res, err);
+        Logger.errorLog(err.message);
+        internalServerErrorResponse(res, err.message);
       });
   }
 }

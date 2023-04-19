@@ -29,19 +29,17 @@ export class OperationsDB {
     model: M
   ): Promise<any> {
     const update = await model
-      .findByIdAndUpdate(id, items)
-      .then((value: any) => {
-        return value;
+      .findByIdAndUpdate({ _id: id }, { $set: items }, { new: true })
+      .then((res) => {
+        Logger.infoLog(res);
+        return res;
       })
-      .catch((err: any) => {
+      .catch((err) => {
         Logger.errorLog(err.message);
-        return Promise.reject(err.message);
       });
 
     Logger.infoLog(`Update in ${model.modelName} item of id: ${id}`);
-
-    console.log(update);
-
+    Logger.infoLog(update);
     return Promise.resolve(update);
   }
 
