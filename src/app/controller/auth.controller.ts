@@ -21,15 +21,24 @@ export class AuthController {
       if (!email || !password) {
         return unprocessableEntityResponse(res);
       }
+    
+      let user: any
+      let userType: any
 
-      let user: any = await Promise.all([
-        AuthService.findUserByEmail(email, customerModel),
-        AuthService.findUserByEmail(email, producerModels),
-      ]);
+      const isCustomer = await AuthService.findUserByEmail(email, customerModel)
 
-      user = user.find((userData: any) => {
-        return userData;
-      });
+      const isProducer = await AuthService.findUserByEmail(email, producerModels)
+
+      if(isCustomer) {
+        user = isCustomer
+        userType = 'Customer'
+        
+      }
+
+      if(isProducer) {
+        user = isProducer
+        userType = 'Producer'
+      }
 
       if (!user) {
         Logger.errorLog("User not found");
@@ -55,8 +64,9 @@ export class AuthController {
         Logger.infoLog(user);
 
         Logger.infoLog("Generate tokens");
+        
         const { accessToken, refreshToken } = await AuthService.generateTokens(
-          user
+          {user, userType}
         );
 
         res.cookie("refreshToken", refreshToken, {

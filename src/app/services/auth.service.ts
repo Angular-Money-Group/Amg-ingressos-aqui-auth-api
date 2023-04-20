@@ -49,7 +49,7 @@ export class AuthService {
       });
   }
 
-  public static async generateTokens(user: CustomerType | ProducerType) {
+  public static async generateTokens(user: any) {
     const accessToken = await this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user);
 
@@ -69,7 +69,7 @@ export class AuthService {
 
   public static async generateAccessToken(user: any) {
     Logger.infoLog("Generate access token");
-    const accessToken = await jwt.sign({ user }, this.accessTokenSecret, {
+    const accessToken = await jwt.sign(user, this.accessTokenSecret, {
       expiresIn: "2h",
     });
     return accessToken;
