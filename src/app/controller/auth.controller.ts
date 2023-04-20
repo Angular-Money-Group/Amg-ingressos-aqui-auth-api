@@ -144,7 +144,7 @@ export class AuthController {
       if (newProducer.password) newProducer.password = undefined;
       Logger.infoLog("Delete password from producer");
 
-      const userToken = await AuthService.generateAccessToken(newProducer);
+      const userToken = await AuthService.generateAccessToken({newProducer});
 
       return successResponse(res, { producer: newProducer, userToken });
     } catch (err: any) {
@@ -210,7 +210,7 @@ export class AuthController {
 
       Logger.infoLog(newCustomer);
 
-      const userToken = await AuthService.generateAccessToken(newCustomer);
+      const userToken = await AuthService.generateAccessToken({newCustomer});
 
       return successResponse(res, { customer: newCustomer, userToken });
     } catch (error: any) {

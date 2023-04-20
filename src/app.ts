@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from 'cors';
-import eventRouter from "./app/routes/events.router";
 import { Logger } from './app/services/logger.service';
 import { connection } from "./app/db/database";
 import { AuthRouter } from "./app/routes/auth.router";
@@ -45,7 +44,6 @@ export class App {
   private router() {
     Logger.infoLog("Loading routes");
     this.server.use(this.authRouter.authRouter)
-    this.server.use(eventRouter)
   }
 
   private swagger() {

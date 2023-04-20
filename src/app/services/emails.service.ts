@@ -73,7 +73,7 @@ export class EmailService {
     const options: SendMailOptions = {
       from: process.env.EMAIL_EMAIL,
       to: infoEmail.email,
-      subject: "Confirmação de E-mail",
+      subject: "[DEV/TESTE] - Confirmação de E-mail",
       html: html,
     };
 
@@ -167,7 +167,7 @@ a {
     const options: SendMailOptions = {
       from: process.env.EMAIL_EMAIL,
       to: email,
-      subject: "Esqueci Minha Senha",
+      subject: "[DEV/TESTE] - Esqueci Minha Senha",
       html: html,
     };
 
