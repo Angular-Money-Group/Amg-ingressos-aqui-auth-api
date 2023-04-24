@@ -1,6 +1,6 @@
 import EmailService from "./../services/emails.service";
 import { Request, Response } from "express";
-import authService, { AuthService } from "../services/auth.service";
+import { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
 import { internalServerErrorResponse } from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";

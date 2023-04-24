@@ -28,19 +28,24 @@ export class OperationsDB {
     items: any,
     model: M
   ): Promise<any> {
-    const update = await model
-      .findByIdAndUpdate({ _id: id }, { $set: items }, { new: true })
-      .then((res) => {
-        Logger.infoLog(res);
-        return res;
-      })
-      .catch((err) => {
-        Logger.errorLog(err.message);
-      });
+    try {
+      const update = await model
+        .findByIdAndUpdate({ _id: id }, { $set: items }, { new: true })
+        .then((res) => {
+          Logger.infoLog(res);
+          return res;
+        })
+        .catch((err) => {
+          Logger.errorLog(err.message);
+          return err
+        });
 
-    Logger.infoLog(`Update in ${model.modelName} item of id: ${id}`);
-    Logger.infoLog(update);
-    return Promise.resolve(update);
+      Logger.infoLog(`Update in ${model.modelName} item of id: ${id}`);
+      Logger.infoLog(update);
+      return Promise.resolve(update);
+    } catch (err: any) {
+      return Promise.reject(err.message);
+    }
   }
 
   public static async deleteItems<M extends Model<any>>(

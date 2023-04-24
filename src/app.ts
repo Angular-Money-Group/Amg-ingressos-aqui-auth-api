@@ -1,3 +1,4 @@
+import { UserRouter } from './app/routes/user.router';
 import dotenv from "dotenv";
 import express from "express";
 import cors from 'cors';
@@ -11,7 +12,7 @@ dotenv.config();
 export class App {
   public server: any
 
-  constructor(private authRouter: AuthRouter) {
+  constructor(private authRouter: AuthRouter, private userRouter: UserRouter) {
     this.server = express();
 
     swaggerDocs(this.server, 3001);
@@ -44,6 +45,7 @@ export class App {
   private router() {
     Logger.infoLog("Loading routes");
     this.server.use(this.authRouter.authRouter)
+    this.server.use('/v1/profile', this.userRouter.userRouter)
   }
 
   private swagger() {

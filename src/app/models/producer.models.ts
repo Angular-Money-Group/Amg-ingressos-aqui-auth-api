@@ -7,13 +7,22 @@ const producerModel = new mongoose.Schema({
   password: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   corporateName: { type: String, required: true },
-  isPhoneVerified: { type: Boolean, required: true, default: false },
-  isEmailVerified: { type: Boolean, required: true, default: false },
-  eventsCreated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  cep: {type: String},
+  address: {type: String},
+  houseNumber: {type: String},
+  complement: {type: String},
+  neighborhood: {type: String},
+  city: {type: String},
+  state: {type: String},
   emailConfirmationCode: {
     code: { type: String , default: null},
     expirationDate: { type: Date, default: null },
   },
+  isPhoneVerified: { type: Boolean, required: true, default: false },
+  isEmailVerified: { type: Boolean, required: true, default: false },
+  myTickets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tickets" }],
+  eventsCreated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+  receiptAccounts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ReceiptAccounts'}]
 });
 
 export default mongoose.model("Producer", producerModel);
