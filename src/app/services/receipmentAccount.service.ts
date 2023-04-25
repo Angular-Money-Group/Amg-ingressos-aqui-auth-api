@@ -52,8 +52,10 @@ export default class ReceiptAccountService {
 
   public static async deleteItems(account: string){
     await OperationsDB.deleteItems(account, receiptAccountsModel).then(() => {
+      Logger.infoLog('Deleted Succefull')
       return Promise.resolve()
     }).catch((err: any) => {
+      Logger.infoLog('Error ' + err.message)
       return Promise.reject()
     })
   }
