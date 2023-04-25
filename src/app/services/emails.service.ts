@@ -124,13 +124,17 @@ export class EmailService {
     const producer = await OperationsDB.findByEmail(email, producerModels);
 
     if (customer) {
-      customer.userType = 'Customer'
-      this.userInformation = await AuthService.generateAccessToken({...customer });
+      customer.userType = "Customer";
+      this.userInformation = await AuthService.generateAccessToken({
+        ...customer,
+      });
     }
 
     if (producer) {
-      producer.userType = 'Producer'
-      this.userInformation = await AuthService.generateAccessToken({...producer });
+      producer.userType = "Producer";
+      this.userInformation = await AuthService.generateAccessToken({
+        ...producer,
+      });
     }
 
     const html = `
@@ -236,6 +240,55 @@ a {
       }
     } catch (err: any) {
       Promise.reject(err);
+    }
+  }
+
+  public async sendSupportEmail(emailData: any) {
+
+    this.transporter = nodemailer.createTransport({
+      host: process.env.HOST_EMAIL,
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_SUPPORT,
+        pass: process.env.PASSWORD_EMAIL,
+      },
+    });
+
+    const options: SendMailOptions = {
+      from: process.env.EMAIL_SUPPORT,
+      to: "suporte@ingressosAqui.com",
+      subject: "Mensagem recebida",
+      html: ` 
+      <html>
+      <body>
+      <h1>Nova Mensagem recebida</h1>
+      
+      <p>De: ${emailData.email}</p>
+      <p>Numero de telefone: ${emailData.phoneNumber}</p>
+      <p>Assunto: ${emailData.subject}</p>
+
+      <p>Com a seguinte mensagem</p>
+
+      <h5>${emailData.message}</h5>
+      
+      </body>
+      </html>
+      `,
+    };
+
+    try {
+      Logger.infoLog("Enviando email");
+      this.transporter
+        .sendMail(options)
+        .then(() => {
+          Logger.infoLog("Email enviado");
+        })
+        .catch((err) => {
+          Logger.errorLog("Email não enviado: " + err);
+        });
+    } catch (error) {
+      Logger.fatalLog("Email não enviado: " + error);
     }
   }
 }
