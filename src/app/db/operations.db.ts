@@ -12,7 +12,7 @@ export class OperationsDB {
         Logger.errorLog(err.message);
         return Promise.reject(err.message);
       });
-
+      
       Logger.infoLog(
         `Create ${model.modelName} id: ${itemCreated._id.toString()}`
       );

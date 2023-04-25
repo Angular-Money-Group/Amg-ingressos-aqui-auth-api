@@ -6,13 +6,14 @@ import { Logger } from './app/services/logger.service';
 import { connection } from "./app/db/database";
 import { AuthRouter } from "./app/routes/auth.router";
 import swaggerDocs from "./swagger";
+import { ReceipmentAccountRouter } from './app/routes/receipmentAccount.router';
 
 dotenv.config();
 
 export class App {
   public server: any
 
-  constructor(private authRouter: AuthRouter, private userRouter: UserRouter) {
+  constructor(private authRouter: AuthRouter, private userRouter: UserRouter, private receipmentAccountRouter: ReceipmentAccountRouter) {
     this.server = express();
 
     swaggerDocs(this.server, 3001);
@@ -46,6 +47,7 @@ export class App {
     Logger.infoLog("Loading routes");
     this.server.use(this.authRouter.authRouter)
     this.server.use('/v1/profile', this.userRouter.userRouter)
+    this.server.use('/v1/accountBank', this.receipmentAccountRouter.receipmentAccountRouter)
   }
 
   private swagger() {

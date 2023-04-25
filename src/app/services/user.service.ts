@@ -2,7 +2,7 @@ import { OperationsDB } from "../db/operations.db";
 import { Model } from "mongoose";
 import { Logger } from "./logger.service";
 
-export class UserService {
+export default class UserService {
 
  public static async updateUser<M extends Model<any>>(id: string, user: any, model: M){
     Logger.infoLog('Update Itens')
@@ -15,6 +15,9 @@ export class UserService {
     })
  }
 
-}
+ public static async findUser<M extends Model<any>>(id: string, model: M, populateOptions?: any){
+    const user = await OperationsDB.getById(id, model)
 
-export default { UserService };
+    return Promise.resolve(user)
+ }
+}

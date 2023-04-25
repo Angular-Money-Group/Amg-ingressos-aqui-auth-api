@@ -1,6 +1,7 @@
+import { AuthService } from "./../services/auth.service";
 import { notFoundResponse } from "./../utils/responses.utils";
 import { Logger } from "../services/logger.service";
-import { UserService } from "../services/user.service";
+import UserService from "../services/user.service";
 import customerModel from "../models/customer.model";
 import { Request, Response } from "express";
 import {
@@ -83,9 +84,20 @@ export class UserController {
           state,
         };
         await UserService.updateUser(id, user, producerModels)
-          .then(() => {
+          .then(async () => {
+            const { accessToken, refreshToken } =
+              await AuthService.generateTokens({ user, userType });
+
+            res.cookie("refreshToken", refreshToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+              maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
+            });
+            Logger.infoLog("Send token to cookies");
+
             Logger.infoLog("Update Success");
-            return successResponse(res, user);
+            return successResponse(res, { user, accessToken });
           })
           .catch((err) => {
             Logger.errorLog(err.message);
