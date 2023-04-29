@@ -1,18 +1,56 @@
-import { AuthService } from "./../services/auth.service";
-import { notFoundResponse } from "./../utils/responses.utils";
+import { Request, Response } from "express";
+import customerModel from "../models/customer.model";
+import producerModels from "../models/producer.models";
 import { Logger } from "../services/logger.service";
 import UserService from "../services/user.service";
-import customerModel from "../models/customer.model";
-import { Request, Response } from "express";
 import {
   internalServerErrorResponse,
   successResponse,
   unprocessableEntityResponse,
 } from "../utils/responses.utils";
-import producerModels from "../models/producer.models";
+import { AuthService } from "./../services/auth.service";
+import { IPagination } from "./../utils/pagination.utils";
+import {
+  noContentResponse,
+  notFoundResponse,
+} from "./../utils/responses.utils";
 
 export class UserController {
   constructor() {}
+
+  public async GetAllUsers(req: Request, res: Response) {
+    try {
+      const { page, pageSize, filter } = req.query as IPagination;
+      const { userType } = req.body;
+
+      let model;
+
+      userType === "Producer"
+        ? (model = producerModels)
+        : (model = customerModel);
+
+      Logger.infoLog("Get Options to paginate");
+      const options = {
+        page: parseInt(page as unknown as string) || 1,
+        pageSize: parseInt(pageSize as unknown as string) || 10,
+        sort: { createdAt: -1 },
+      };
+
+      Logger.infoLog("Get users");
+      const users: any = await UserService.getAll(model, options, filter!);
+
+      Logger.infoLog(users);
+      if (!users) {
+        Logger.errorLog("No users found");
+        return noContentResponse(res);
+      }
+
+      return successResponse(res, users);
+    } catch (err: any) {
+      Logger.errorLog(err.message);
+      return internalServerErrorResponse(res, err.message);
+    }
+  }
 
   public async updateUser(req: Request, res: Response) {
     const id: any = req.params.id;
@@ -107,6 +145,27 @@ export class UserController {
         return notFoundResponse(res);
       }
     } catch (err: any) {
+      return internalServerErrorResponse(res, err.message);
+    }
+  }
+
+  public async deleteUser(req: Request, res: Response) {
+    try {
+      const id: any = req.params.id;
+      const { userType } = req.body;
+
+      if (!id || !userType) return unprocessableEntityResponse(res);
+
+      let model;
+
+      userType === "Producer"
+        ? (model = producerModels)
+        : (model = customerModel);
+
+      await UserService.deleteItems(id, model);
+      return successResponse(res, null);
+    } catch (err: any) {
+      Logger.infoLog("Error " + err.message);
       return internalServerErrorResponse(res, err.message);
     }
   }

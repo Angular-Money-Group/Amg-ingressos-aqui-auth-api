@@ -9,6 +9,10 @@ export const createdResponse = (res: Response, data: any, object: string) => {
     return res.status(201).json({ message: `${object} criado com sucesso`, data });
 }
 
+export const noContentResponse = (res: Response) => {
+    return res.status(204);
+}
+
 export const badRequestResponse = (res: Response) => {
     return res.status(400).json({ message: "Não foi possivel realizar essa ação" });
 }

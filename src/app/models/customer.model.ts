@@ -14,8 +14,9 @@ const customerModel = new mongoose.Schema({
   neighborhood: {type: String},
   city: {type: String},
   state: {type: String},
-  isPhoneVerified: { type: Boolean, required: true },
-  isEmailVerified: { type: Boolean, required: true },
+  isPhoneVerified: { type: Boolean, required: true, default: false },
+  isEmailVerified: { type: Boolean, required: true, default: false },
+  isActive: { type: Boolean, required: true, default: true },
   emailConfirmationCode: { 
     code: { type: String },
     expirationDate: {type: Date } 
