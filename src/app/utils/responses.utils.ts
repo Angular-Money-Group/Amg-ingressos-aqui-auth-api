@@ -6,7 +6,7 @@ export const successResponse = (res: Response, data: any) => {
 }
 
 export const createdResponse = (res: Response, data: any, object: string) => {
-    return res.status(201).json({ message: `${object} creado com sucesso`, data });
+    return res.status(201).json({ message: `${object} criado com sucesso`, data });
 }
 
 export const badRequestResponse = (res: Response) => {
@@ -23,6 +23,38 @@ export const forbiddenResponse = (res: Response) => {
 
 export const notFoundResponse = (res: Response) => {
     return res.status(404).json({ message: 'Não foi possivel encontrar o recurso solicitado' });
+}
+
+export const userNotFound = (res: Response) => {
+    return res.status(404).json({ message: 'Usuário não encontrado' });
+}
+
+export const invalidPassword = (res: Response) => {
+    return res.status(404).json({ message: 'Senha incorreta' });
+}
+
+export const emailAlreadyExists = (res: Response) => {
+    return res.status(404).json({ message: 'Este email já está cadastrado' });
+}
+
+export const failToRegister = (res: Response) => {
+    return res.status(404).json({ message: 'Erro ao cadastrar usuário, tente novamente em alguns segundos...' });
+}
+
+export const failToUpdatePassword = (res: Response) => {
+    return res.status(404).json({ message: 'Erro ao atualizar senha, tente novamente em alguns segundos...' });
+}
+
+export const invalidEmailFormat = (res: Response) => {
+    return res.status(404).json({ message: 'Formato de email não suportado' });
+}
+
+export const logoutError = (res: Response) => {
+    return res.status(404).json({ message: 'Falha ao tentar fazer Logout' });
+}
+
+export const emailNotConfirmed = (res: Response) => {
+    return res.status(404).json({ message: 'Verifique seu email para dar continuidade...' });
 }
 
 export const unprocessableEntityResponse = (res: Response) => {

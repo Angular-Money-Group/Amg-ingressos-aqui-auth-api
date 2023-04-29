@@ -9,6 +9,14 @@ import {
   badRequestResponse,
   successResponse,
   unprocessableEntityResponse,
+  userNotFound,
+  invalidPassword,
+  emailAlreadyExists,
+  failToRegister,
+  invalidEmailFormat,
+  logoutError,
+  emailNotConfirmed,
+  failToUpdatePassword
 } from "./../utils/responses.utils";
 
 export class AuthController {
@@ -42,7 +50,7 @@ export class AuthController {
 
       if (!user) {
         Logger.errorLog("User not found");
-        return badRequestResponse(res);
+        return userNotFound(res);
       } else {
         const isMatch = await AuthService.comparePassword(
           password,
@@ -52,7 +60,7 @@ export class AuthController {
 
         if (!isMatch) {
           Logger.errorLog("Password not match");
-          return badRequestResponse(res);
+          return invalidPassword(res);
         }
 
         Logger.infoLog("Delete User password for generate tokens");
@@ -80,7 +88,8 @@ export class AuthController {
         return successResponse(res, { accessToken });
       }
     } catch (error: any) {
-      Logger.errorLog("Login error: " + error);
+      Logger.errorLog("error_code: " + error.error_code +"Login error: " + error);
+      console.error(error);
       return internalServerErrorResponse(res, error.message);
     }
   }
@@ -102,11 +111,20 @@ export class AuthController {
         return unprocessableEntityResponse(res);
       }
 
+      if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+        return invalidEmailFormat(res);
+      }
+
       const producer = await AuthService.findUserByEmail(email, producerModels);
 
-      if (producer) {
-        Logger.errorLog("Producer already exists");
-        return badRequestResponse(res);
+      const isCustomer = await AuthService.findUserByEmail(
+        email,
+        producerModels
+      );
+
+      if (isCustomer || producer) {
+        Logger.errorLog("Customer already exists");
+        return emailAlreadyExists(res);
       }
 
       const hashPassword = await AuthService.hashPassword(password);
@@ -125,7 +143,7 @@ export class AuthController {
 
       if (!newProducer) {
         Logger.errorLog("Producer not created");
-        return internalServerErrorResponse(res, "Producer not created");
+        return failToRegister(res);
       }
 
       Logger.infoLog("Producer created");
@@ -162,6 +180,10 @@ export class AuthController {
         return unprocessableEntityResponse(res);
       }
 
+      if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+        return invalidEmailFormat(res);
+      }
+
       const customer = await AuthService.findUserByEmail(email, customerModel);
 
       const isProducer = await AuthService.findUserByEmail(
@@ -171,7 +193,7 @@ export class AuthController {
 
       if (customer || isProducer) {
         Logger.errorLog("Customer already exists");
-        return badRequestResponse(res);
+        return emailAlreadyExists(res);
       }
 
       const hashPassword = await AuthService.hashPassword(password);
@@ -189,7 +211,7 @@ export class AuthController {
 
       if (!newCustomer) {
         Logger.errorLog("Customer not created");
-        return internalServerErrorResponse(res, "Customer not created");
+        return failToRegister(res);
       }
 
       Logger.infoLog("Customer created");
@@ -230,7 +252,7 @@ export class AuthController {
       return successResponse(res, {});
     } catch (error: any) {
       Logger.errorLog("Logout error: " + error.message);
-      return internalServerErrorResponse(res, error.message);
+      return logoutError(res);
     }
   }
 
@@ -265,6 +287,10 @@ export class AuthController {
   public async resendEmail(req: Request, res: Response) {
     Logger.infoLog("Finding User");
 
+    if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(req.body.email))) {
+      return invalidEmailFormat(res);
+    }
+
     let user = await AuthService.findUserByEmail(req.body.email, customerModel);
 
     if (!user)
@@ -272,7 +298,7 @@ export class AuthController {
 
     if (!user) {
       Logger.errorLog("User not found");
-      return badRequestResponse(res);
+      return userNotFound(res);
     } else {
       Logger.infoLog("Reenviando email");
       const emailService = new EmailService();
@@ -309,7 +335,7 @@ export class AuthController {
             successResponse(res, undefined);
           })
           .catch((err: any) => {
-            badRequestResponse(res);
+            emailNotConfirmed(res);
           });
       }
 
@@ -321,7 +347,7 @@ export class AuthController {
             successResponse(res, undefined);
           })
           .catch((err: any) => {
-            badRequestResponse(res);
+            emailNotConfirmed(res);
           });
       }
     } catch (err: any) {
@@ -331,6 +357,10 @@ export class AuthController {
 
   public async forgotPassword(req: Request, res: Response) {
     const { email } = req.body;
+
+    if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+      return invalidEmailFormat(res);
+    }
 
     const emailService = new EmailService();
     await emailService.sendEmailForForgotPassword(email);
@@ -357,7 +387,7 @@ export class AuthController {
       })
       .catch((err) => {
         Logger.errorLog(err.message);
-        internalServerErrorResponse(res, err.message);
+        failToUpdatePassword(res);
       });
   }
 }
