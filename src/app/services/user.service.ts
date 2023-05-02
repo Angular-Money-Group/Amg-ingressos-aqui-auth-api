@@ -42,15 +42,7 @@ export default class UserService {
   ) {
     try {
       Logger.infoLog("Update Itens");
-      await OperationsDB.updateItems(id, user, model)
-        .then(() => {
-          Logger.infoLog("Sucesso ao update");
-          return Promise.resolve();
-        })
-        .catch((err) => {
-          Logger.errorLog(err.message);
-          Promise.reject();
-        });
+      return await OperationsDB.updateItems(id, user, model)
     } catch {
       return Promise.reject(new Error("Error on Update"));
     }

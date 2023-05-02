@@ -20,7 +20,7 @@ export class AccountBankController {
       const { cnpj, fullName, bank, bankAgency, bankAccount, bankDigit } =
         req.body;
 
-      const accounts = {
+      const accounts: any = {
         cnpj,
         fullName,
         bank,
@@ -41,17 +41,12 @@ export class AccountBankController {
         return unprocessableEntityResponse(res);
       }
 
-      const hashbank = await ReceiptAccountService.encryptData({
-        accounts,
-      });
-
       const user = await userService.findUser(id, producerModels);
 
       Logger.infoLog(user);
 
-      hashbank.accounts.userID = user._id;
       const account = await ReceiptAccountService.registerReceiptBanking(
-        hashbank.accounts
+        accounts
       ).catch((err) => {
         return internalServerErrorResponse(res, err.message);
       });
@@ -80,7 +75,7 @@ export class AccountBankController {
 
     Logger.infoLog("Populate user");
     const userPop = await user.populate("receiptAccounts");
-
+        
     Logger.infoLog("Return accounts");
     return successResponse(res, userPop.receiptAccounts);
   }
@@ -93,7 +88,6 @@ export class AccountBankController {
 
       const user = await userService.findUser(userId, producerModels);
 
-      Logger.infoLog(user)
       await ReceiptAccountService.deleteItems(id)
         .then(() => {
           Logger.infoLog("Delete id from user model");

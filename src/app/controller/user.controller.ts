@@ -90,9 +90,28 @@ export class UserController {
           state,
         };
 
-        await UserService.updateUser(id, user, customerModel).then(() => {
-          return successResponse(res, user);
+        const userUpdate = await UserService.updateUser(
+          id,
+          user,
+          customerModel
+        );
+
+        const { accessToken, refreshToken } = await AuthService.generateTokens({
+          userUpdate,
+          userType,
         });
+
+        Logger.infoLog("Send token to cookies");
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
+        });
+
+        Logger.infoLog("Update Success");
+        return successResponse(res, { user: userUpdate, accessToken });
+
       } else if (userType === "Producer") {
         const {
           manager,
@@ -121,26 +140,27 @@ export class UserController {
           city,
           state,
         };
-        await UserService.updateUser(id, user, producerModels)
-          .then(async () => {
-            const { accessToken, refreshToken } =
-              await AuthService.generateTokens({ user, userType });
+        const userUpdate = await UserService.updateUser(
+          id,
+          user,
+          producerModels
+        );
+        
+        const { accessToken, refreshToken } = await AuthService.generateTokens({
+          userUpdate,
+          userType,
+        });
 
-            res.cookie("refreshToken", refreshToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: "none",
-              maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
-            });
-            Logger.infoLog("Send token to cookies");
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
+        });
+        Logger.infoLog("Send token to cookies");
 
-            Logger.infoLog("Update Success");
-            return successResponse(res, { user, accessToken });
-          })
-          .catch((err) => {
-            Logger.errorLog(err.message);
-            return internalServerErrorResponse(res, err.message);
-          });
+        Logger.infoLog("Update Success");
+        return successResponse(res, { user: userUpdate, accessToken });
       } else {
         return notFoundResponse(res);
       }
