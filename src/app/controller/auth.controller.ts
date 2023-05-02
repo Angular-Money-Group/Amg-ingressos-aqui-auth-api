@@ -16,7 +16,7 @@ import {
   invalidEmailFormat,
   logoutError,
   emailNotConfirmed,
-  failToUpdatePassword
+  failToUpdatePassword,
 } from "./../utils/responses.utils";
 
 export class AuthController {
@@ -29,66 +29,72 @@ export class AuthController {
       if (!email || !password) {
         return unprocessableEntityResponse(res);
       }
-    
-      let user: any
-      let userType: any
 
-      const isCustomer = await AuthService.findUserByEmail(email, customerModel)
+      let user: any;
+      let userType: any;
 
-      const isProducer = await AuthService.findUserByEmail(email, producerModels)
+      user = await Promise.all([
+        AuthService.findUserByEmail(email, customerModel),
+        AuthService.findUserByEmail(email, producerModels),
+      ]);
 
-      if(isCustomer) {
-        user = isCustomer
-        userType = 'Customer'
-        
-      }
-
-      if(isProducer) {
-        user = isProducer
-        userType = 'Producer'
-      }
+      user = user.find((userOb: any) => {
+        return userOb;
+      })
 
       if (!user) {
         Logger.errorLog("User not found");
         return userNotFound(res);
-      } else {
-        const isMatch = await AuthService.comparePassword(
-          password,
-          user.password as string
-        );
-        Logger.infoLog("Compare password result: " + isMatch);
-
-        if (!isMatch) {
-          Logger.errorLog("Password not match");
-          return invalidPassword(res);
-        }
-
-        Logger.infoLog("Delete User password for generate tokens");
-        
-        
-        delete user.password;
-
-        if (user.password) user.password = undefined;
-        Logger.infoLog(user);
-
-        Logger.infoLog("Generate tokens");
-        
-        const { accessToken, refreshToken } = await AuthService.generateTokens(
-          {user, userType}
-        );
-
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
-        });
-        Logger.infoLog("Send token to cookies");
-
-        return successResponse(res, { accessToken });
       }
+
+      if ("cpf" in user) {
+        userType = "Customer";
+      } else if(user.email === process.env.EMAIL_ADMIN){
+        userType = "Admin";
+      } else if ("cnpj" in user) {
+        userType = "Producer";
+      } else {
+        return userNotFound(res);
+      }
+
+      const isMatch = await AuthService.comparePassword(
+        password,
+        user.password as string
+      );
+      Logger.infoLog("Compare password result: " + isMatch);
+
+      if (!isMatch) {
+        Logger.errorLog("Password not match");
+        return invalidPassword(res);
+      }
+
+      Logger.infoLog("Delete User password for generate tokens");
+
+      delete user.password;
+
+      if (user.password) user.password = undefined;
+      Logger.infoLog(user);
+
+      Logger.infoLog("Generate tokens");
+
+      const { accessToken, refreshToken } = await AuthService.generateTokens({
+        user,
+        userType,
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // tempo de vida de 7 dias
+      });
+      Logger.infoLog("Send token to cookies");
+
+      return successResponse(res, { accessToken });
     } catch (error: any) {
-      Logger.errorLog("error_code: " + error.error_code +"Login error: " + error);
+      Logger.errorLog(
+        "error_code: " + error.error_code + "Login error: " + error
+      );
       console.error(error);
       return internalServerErrorResponse(res, error.message);
     }
@@ -96,11 +102,11 @@ export class AuthController {
 
   public async registerProducer(req: Request, res: Response) {
     try {
-      const { manager, cnpj, email, password, phoneNumber, corporateName } =
+      const { name, cnpj, email, password, phoneNumber, corporateName } =
         req.body;
 
       if (
-        !manager ||
+        !name ||
         !cnpj ||
         !email ||
         !password ||
@@ -111,7 +117,9 @@ export class AuthController {
         return unprocessableEntityResponse(res);
       }
 
-      if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+      if (
+        !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
+      ) {
         return invalidEmailFormat(res);
       }
 
@@ -131,7 +139,7 @@ export class AuthController {
       Logger.infoLog("Gen Passhash " + hashPassword);
 
       const newProducer: any = await AuthService.createProducer({
-        manager,
+        name,
         cnpj,
         email,
         password: hashPassword,
@@ -162,7 +170,7 @@ export class AuthController {
       if (newProducer.password) newProducer.password = undefined;
       Logger.infoLog("Delete password from producer");
 
-      const userToken = await AuthService.generateAccessToken({newProducer});
+      const userToken = await AuthService.generateAccessToken({ newProducer });
 
       return successResponse(res, { producer: newProducer, userToken });
     } catch (err: any) {
@@ -180,7 +188,9 @@ export class AuthController {
         return unprocessableEntityResponse(res);
       }
 
-      if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+      if (
+        !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
+      ) {
         return invalidEmailFormat(res);
       }
 
@@ -232,7 +242,7 @@ export class AuthController {
 
       Logger.infoLog(newCustomer);
 
-      const userToken = await AuthService.generateAccessToken({newCustomer});
+      const userToken = await AuthService.generateAccessToken({ newCustomer });
 
       return successResponse(res, { customer: newCustomer, userToken });
     } catch (error: any) {
@@ -287,7 +297,11 @@ export class AuthController {
   public async resendEmail(req: Request, res: Response) {
     Logger.infoLog("Finding User");
 
-    if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(req.body.email))) {
+    if (
+      !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(
+        req.body.email
+      )
+    ) {
       return invalidEmailFormat(res);
     }
 
@@ -358,7 +372,7 @@ export class AuthController {
   public async forgotPassword(req: Request, res: Response) {
     const { email } = req.body;
 
-    if (!(/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email))) {
+    if (!/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)) {
       return invalidEmailFormat(res);
     }
 

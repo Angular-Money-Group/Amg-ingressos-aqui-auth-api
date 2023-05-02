@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const producerModel = new mongoose.Schema({
-  manager: { type: String, required: true },
+  name: { type: String, required: true },
   cnpj: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
@@ -30,7 +30,7 @@ export default mongoose.model("Producer", producerModel);
 
 export interface ProducerType {
   id?: string;
-  manager: string;
+  name: string;
   cnpj: string;
   email: string;
   password: string | undefined;

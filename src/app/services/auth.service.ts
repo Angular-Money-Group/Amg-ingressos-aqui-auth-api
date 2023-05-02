@@ -114,7 +114,7 @@ export class AuthService {
       });
   }
 
-  public static async createProducer(producer: ProducerType): Promise<any> {
+  public static async createProducer(producer: any): Promise<any> {
     return await OperationsDB.registerItem(producer, ProducerModel)
       .then((result) => {
         Logger.infoLog("Create producer result: " + result);
