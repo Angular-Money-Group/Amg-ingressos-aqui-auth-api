@@ -22,7 +22,7 @@ export class UserController {
     try {
       const { page, pageSize, filter } = req.query as IPagination;
       const { userType } = req.body;
-
+      
       let model;
 
       userType === "Producer"
@@ -37,9 +37,18 @@ export class UserController {
       };
 
       Logger.infoLog("Get users");
-      const users: any = await UserService.getAll(model, options, filter!);
+      var users: any = await UserService.getAll(model, options, filter!);
 
-      Logger.infoLog(users);
+      users.forEach((element: any) => {
+        if(element._id == req.body.user.user._id){
+          users.splice(users.indexOf(element))
+        }
+      });
+      
+      users = users.map((element: any) => {
+        element.password = undefined
+        return element
+      })
       if (!users) {
         Logger.errorLog("No users found");
         return noContentResponse(res);
@@ -97,7 +106,7 @@ export class UserController {
         );
 
         const { accessToken, refreshToken } = await AuthService.generateTokens({
-          userUpdate,
+          user: userUpdate,
           userType,
         });
 
@@ -147,7 +156,7 @@ export class UserController {
         );
         
         const { accessToken, refreshToken } = await AuthService.generateTokens({
-          userUpdate,
+          user: userUpdate,
           userType,
         });
 
@@ -172,7 +181,7 @@ export class UserController {
   public async deleteUser(req: Request, res: Response) {
     try {
       const id: any = req.params.id;
-      const { userType } = req.body;
+      const userType = req.query.userType;
 
       if (!id || !userType) return unprocessableEntityResponse(res);
 
@@ -182,8 +191,9 @@ export class UserController {
         ? (model = producerModels)
         : (model = customerModel);
 
-      await UserService.deleteItems(id, model);
-      return successResponse(res, null);
+      const userUpdate = await UserService.updateUser(id, {isActive: false}, model);
+      userUpdate.password = undefined
+      return successResponse(res, userUpdate);
     } catch (err: any) {
       Logger.infoLog("Error " + err.message);
       return internalServerErrorResponse(res, err.message);
