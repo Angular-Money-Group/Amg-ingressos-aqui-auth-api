@@ -1,3 +1,4 @@
+import { TokenValidation } from "./app/utils/verifytoken";
 import { AccountBankController } from "./app/controller/accountBank.controller";
 import { UserController } from "./app/controller/user.controller";
 import { UserRouter } from "./app/routes/user.router";
@@ -15,13 +16,15 @@ const userController = new UserController();
 const authController = new AuthController();
 const supportController = new SupportController();
 const accountBankController = new AccountBankController();
+const tokenValidation = new TokenValidation();
 
 const authRouter = new AuthRouter(authController);
 const supportRouter = new SupportRouter(supportController);
 const receipmentAccountRouter = new ReceipmentAccountRouter(
-  accountBankController
+  accountBankController,
+  tokenValidation
 );
-const userRouter = new UserRouter(userController);
+const userRouter = new UserRouter(userController, tokenValidation);
 
 new App(authRouter, userRouter, receipmentAccountRouter, supportRouter).server
   .listen(port, () => {
