@@ -2,9 +2,10 @@ import EmailService from "./../services/emails.service";
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
-import { internalServerErrorResponse } from "../utils/responses.utils";
+import { internalServerErrorResponse, sessionExpired } from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";
 import producerModels from "./../models/producer.models";
+import * as Exception from "../exceptions";
 import {
   badRequestResponse,
   successResponse,
@@ -16,7 +17,7 @@ import {
   invalidEmailFormat,
   logoutError,
   emailNotConfirmed,
-  failToUpdatePassword,
+  failedToUpdatePassword,
 } from "./../utils/responses.utils";
 
 export class AuthController {
@@ -27,7 +28,7 @@ export class AuthController {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return unprocessableEntityResponse(res);
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
       }
 
       let user: any;
@@ -43,8 +44,7 @@ export class AuthController {
       })
 
       if (!user) {
-        Logger.errorLog("User not found");
-        return userNotFound(res);
+        throw new Exception.UserNotFound("Usuario nao encontrado");
       }
 
       if ("cpf" in user) {
@@ -54,7 +54,7 @@ export class AuthController {
       } else if ("cnpj" in user) {
         userType = "Producer";
       } else {
-        return userNotFound(res);
+        throw new Exception.UserNotFound("Usuario nao encontrado");
       }
 
       const isMatch = await AuthService.comparePassword(
@@ -64,8 +64,7 @@ export class AuthController {
       Logger.infoLog("Compare password result: " + isMatch);
 
       if (!isMatch) {
-        Logger.errorLog("Password not match");
-        return invalidPassword(res);
+        throw new Exception.InvalidPassword("Senha nao confere");
       }
 
       Logger.infoLog("Delete User password for generate tokens");
@@ -91,12 +90,27 @@ export class AuthController {
       Logger.infoLog("Send token to cookies");
 
       return successResponse(res, { accessToken });
+
     } catch (error: any) {
-      Logger.errorLog(
-        "error_code: " + error.error_code + "Login error: " + error
-      );
-      console.error(error);
-      return internalServerErrorResponse(res, error.message);
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.UserNotFound) {
+        Logger.errorLog("User not found");
+        return userNotFound(res);
+      }
+      else if (error instanceof Exception.InvalidPassword) {
+        Logger.errorLog("Password not match");
+        return invalidPassword(res);
+      }
+      else {
+        Logger.errorLog(
+          "error_code: " + error.error_code + "Login error: " + error
+        );
+        console.error(error);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
@@ -113,14 +127,13 @@ export class AuthController {
         !phoneNumber ||
         !corporateName
       ) {
-        Logger.errorLog("Missing params");
-        return unprocessableEntityResponse(res);
+        throw new Exception.UnauthorizedResponse("Campos Nulos");
       }
 
       if (
         !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
       ) {
-        return invalidEmailFormat(res);
+        throw new Exception.InvalidEmailFormat("Formato de email invalido")
       }
 
       const producer = await AuthService.findUserByEmail(email, producerModels);
@@ -131,8 +144,7 @@ export class AuthController {
       );
 
       if (isCustomer || producer) {
-        Logger.errorLog("Customer already exists");
-        return emailAlreadyExists(res);
+        throw new Exception.EmailAlreadyExists("Email jah existe");
       }
 
       const hashPassword = await AuthService.hashPassword(password);
@@ -150,8 +162,7 @@ export class AuthController {
       });
 
       if (!newProducer) {
-        Logger.errorLog("Producer not created");
-        return failToRegister(res);
+        throw new Exception.FailedToRegister("Produtor nao cadastrado");
       }
 
       Logger.infoLog("Producer created");
@@ -173,9 +184,27 @@ export class AuthController {
       const userToken = await AuthService.generateAccessToken({ newProducer });
 
       return successResponse(res, { producer: newProducer, userToken });
-    } catch (err: any) {
-      Logger.errorLog("Login error: " + err.message);
-      internalServerErrorResponse(res, err.message);
+    } catch (error: any) {
+        if (error instanceof Exception.UnprocessableEntityResponse) {
+          Logger.errorLog("Missing params");
+          return unprocessableEntityResponse(res);
+        }
+        else if (error instanceof Exception.InvalidEmailFormat) {
+          Logger.errorLog("Invalid email format");
+          return invalidEmailFormat(res);
+        }
+        else if (error instanceof Exception.EmailAlreadyExists) {
+          Logger.errorLog("User email already exists");
+          return emailAlreadyExists(res);
+        }
+        else if(error instanceof Exception.FailedToRegister) {
+          Logger.errorLog("Producer not created");
+          return failToRegister(res);
+        }
+        else {
+          Logger.errorLog("Register Producer error: " + error.message);
+          internalServerErrorResponse(res, error.message);
+        }
     }
   }
 
@@ -184,14 +213,13 @@ export class AuthController {
       const { name, cpf, email, password, phoneNumber } = req.body;
 
       if (!name || !cpf || !email || !password || !phoneNumber) {
-        Logger.errorLog("Missing params");
-        return unprocessableEntityResponse(res);
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
       }
 
       if (
         !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
       ) {
-        return invalidEmailFormat(res);
+        throw new Exception.InvalidEmailFormat("Formato de email invalido")
       }
 
       const customer = await AuthService.findUserByEmail(email, customerModel);
@@ -202,8 +230,7 @@ export class AuthController {
       );
 
       if (customer || isProducer) {
-        Logger.errorLog("Customer already exists");
-        return emailAlreadyExists(res);
+        throw new Exception.EmailAlreadyExists("Email jah existe");
       }
 
       const hashPassword = await AuthService.hashPassword(password);
@@ -220,8 +247,7 @@ export class AuthController {
       });
 
       if (!newCustomer) {
-        Logger.errorLog("Customer not created");
-        return failToRegister(res);
+        throw new Exception.FailedToRegister("Customer nao cadastrado");
       }
 
       Logger.infoLog("Customer created");
@@ -246,8 +272,26 @@ export class AuthController {
 
       return successResponse(res, { customer: newCustomer, userToken });
     } catch (error: any) {
-      Logger.errorLog("Register customer error: " + error);
-      return internalServerErrorResponse(res, error.message);
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.InvalidEmailFormat) {
+        Logger.errorLog("Invalid email format");
+        return invalidEmailFormat(res);
+      }
+      else if (error instanceof Exception.EmailAlreadyExists) {
+        Logger.errorLog("User email already exists");
+        return emailAlreadyExists(res);
+      }
+      else if(error instanceof Exception.FailedToRegister) {
+        Logger.errorLog("Customer not created");
+        return failToRegister(res);
+      }
+      else {
+        Logger.errorLog("Register Costumer error: " + error.message);
+        internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
@@ -260,7 +304,9 @@ export class AuthController {
       });
       Logger.infoLog("Clear cookie");
       return successResponse(res, {});
-    } catch (error: any) {
+    } 
+    
+    catch (error: any) {
       Logger.errorLog("Logout error: " + error.message);
       return logoutError(res);
     }
@@ -271,8 +317,7 @@ export class AuthController {
       const { refreshToken } = req.cookies;
 
       if (!refreshToken) {
-        Logger.errorLog("Refresh token not found");
-        return unprocessableEntityResponse(res);
+        throw new Exception.SessionExpired("refresh token nao encontrado");
       }
 
       const { accessToken, refreshToken: newRefreshToken } =
@@ -288,44 +333,67 @@ export class AuthController {
       Logger.infoLog("Send token to cookies");
 
       return successResponse(res, { accessToken });
-    } catch (error: any) {
-      Logger.errorLog("Refresh token error: " + error.message);
-      return internalServerErrorResponse(res, error.message);
+    }
+    catch (error: any) {
+      if (error instanceof Exception.SessionExpired){
+        Logger.errorLog("Refresh token not found");
+        return sessionExpired(res);
+      } else {
+        Logger.errorLog("Refresh token error: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
   public async resendEmail(req: Request, res: Response) {
     Logger.infoLog("Finding User");
+    try {
+      if (
+        !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(
+          req.body.email
+        )
+      ) {
+        throw new Exception.InvalidEmailFormat("Formato de email invalido");
+      }
 
-    if (
-      !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(
-        req.body.email
-      )
-    ) {
-      return invalidEmailFormat(res);
-    }
+      console.log(req.body);
 
-    let user = await AuthService.findUserByEmail(req.body.email, customerModel);
+      let user = await AuthService.findUserByEmail(req.body.email, customerModel);
 
-    if (!user)
-      user = await AuthService.findUserByEmail(req.body.email, producerModels);
+      if (!user)
+        user = await AuthService.findUserByEmail(req.body.email, producerModels);
 
-    if (!user) {
-      Logger.errorLog("User not found");
-      return userNotFound(res);
-    } else {
-      Logger.infoLog("Reenviando email");
-      const emailService = new EmailService();
+      if (!user) {
+        return successResponse(res, undefined);
+        // throw new Exception.UserNotFound("Usuario nao encontrado");
+        
+      } else {
+        Logger.infoLog("Reenviando email");
+        const emailService = new EmailService();
 
-      emailService.sendEmailToConfirmationAccount(
-        {
-          id: user._id,
-          email: user.email,
-        },
-        producerModels
-      );
+        emailService.sendEmailToConfirmationAccount(
+          {
+            id: user._id,
+            email: user.email,
+          },
+          producerModels
+        );
 
-      return successResponse(res, undefined);
+        return successResponse(res, undefined);
+      }
+    } catch (error: any) {
+      if (error instanceof Exception.InvalidEmailFormat) {
+        Logger.errorLog("Invalid email format");
+        return invalidEmailFormat(res);
+      } 
+      else if (error instanceof Exception.UserNotFound) {
+        Logger.errorLog("User not found");
+        return userNotFound(res);
+      }
+      else {
+        Logger.errorLog("Resend Email Error: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
@@ -334,9 +402,8 @@ export class AuthController {
       const userID = req.params.id;
       const { codeConfirmation, userType } = req.body;
 
-      if (!codeConfirmation || !userID) {
-        Logger.errorLog("No Informations");
-        return unprocessableEntityResponse(res);
+      if (!codeConfirmation || !userID || !userType) {
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
       }
 
       const emailService = new EmailService();
@@ -349,7 +416,7 @@ export class AuthController {
             successResponse(res, undefined);
           })
           .catch((err: any) => {
-            emailNotConfirmed(res);
+            throw new Exception.EmailNotConfirmed("Email nao confirmado");
           });
       }
 
@@ -361,47 +428,83 @@ export class AuthController {
             successResponse(res, undefined);
           })
           .catch((err: any) => {
-            emailNotConfirmed(res);
+            throw new Exception.EmailNotConfirmed("Email nao confirmado");
           });
       }
-    } catch (err: any) {
-      internalServerErrorResponse(res, err);
+    } catch (error: any) {
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      } else if (error instanceof Exception.EmailNotConfirmed) {
+        Logger.errorLog("Email not Confirmed");
+        emailNotConfirmed(res);
+      }
+      else {
+        Logger.errorLog("Confirmation Email Error: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
   public async forgotPassword(req: Request, res: Response) {
-    const { email } = req.body;
+    try {
+      const { email } = req.body;
 
-    if (!/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)) {
-      return invalidEmailFormat(res);
+      if (!/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)) {
+          throw new Exception.InvalidEmailFormat("Formato de email invalido")
+      }
+
+      const emailService = new EmailService();
+      await emailService.sendEmailForForgotPassword(email);
+
+      return successResponse(res, undefined);
     }
-
-    const emailService = new EmailService();
-    await emailService.sendEmailForForgotPassword(email);
-
-    return successResponse(res, undefined);
+    catch (error: any) {
+      if (error instanceof Exception.InvalidEmailFormat) {
+        Logger.errorLog("Invalid email format");
+        return invalidEmailFormat(res);
+      }
+      else {
+        Logger.errorLog("Forgot Password Error: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
+    }
   }
 
   public async resetPassword(req: Request, res: Response) {
-    const id = req.params.id;
-    const { newPassword, userType } = req.body;
+    try {
+      const id = req.params.id;
+      const { newPassword, userType } = req.body;
 
-    if (!userType || !newPassword || !id) {
-      return unprocessableEntityResponse(res);
+      if (!userType || !newPassword || !id) {
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
+      }
+
+      Logger.infoLog("Gerando Passhash");
+      const hashPassword = await AuthService.hashPassword(newPassword);
+      Logger.infoLog("Gen Passhash " + hashPassword);
+
+      await AuthService.changePassword(id, hashPassword, userType)
+        .then(() => {
+          Logger.infoLog("Operação realizada com sucesso");
+          successResponse(res, undefined);
+        })
+        .catch((err) => {
+          throw new Exception.FailedToUpdatePassword("Falha ao atualizar senha");
+        });
+    } catch (error: any) {
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.FailedToUpdatePassword) {
+        Logger.errorLog("Failed to Update Password");
+        failedToUpdatePassword(res);
+      }
+      else {
+        Logger.errorLog("Reset Password Error: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
-
-    Logger.infoLog("Gerando Passhash");
-    const hashPassword = await AuthService.hashPassword(newPassword);
-    Logger.infoLog("Gen Passhash " + hashPassword);
-
-    await AuthService.changePassword(id, hashPassword, userType)
-      .then(() => {
-        Logger.infoLog("Operação realizada com sucesso");
-        successResponse(res, undefined);
-      })
-      .catch((err) => {
-        Logger.errorLog(err.message);
-        failToUpdatePassword(res);
-      });
   }
 }

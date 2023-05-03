@@ -131,19 +131,24 @@ export class AuthService {
     newPassword: string,
     userType: string
   ) {
-    if (userType === "Customer") {
-      await OperationsDB.updateItems(id, {password: newPassword}, customerModel).then(
-        (update: any) => {
-          return Promise.resolve(update);
-        }
-      );
-    } else if (userType == "Producer") {
-      await OperationsDB.updateItems(id, {password: newPassword}, ProducerModel).then(
-        (update: any) => {
-          return Promise.resolve(update);
-        }
-      );
-    } else {
+    try {
+      if (userType === "Customer") {
+        await OperationsDB.updateItems(id, {password: newPassword}, customerModel).then(
+          (update: any) => {
+            return Promise.resolve(update);
+          }
+        );
+      } else if (userType == "Producer") {
+        await OperationsDB.updateItems(id, {password: newPassword}, ProducerModel).then(
+          (update: any) => {
+            return Promise.resolve(update);
+          }
+        );
+      } else {
+        return Promise.reject();
+      }
+    }
+    catch (error: any) {
       return Promise.reject();
     }
   }
