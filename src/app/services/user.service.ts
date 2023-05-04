@@ -57,6 +57,7 @@ export default class UserService {
     }
   }
 
+
   public static async findUser<M extends Model<any>>(
     id: string,
     model: M,
@@ -66,7 +67,7 @@ export default class UserService {
       Logger.infoLog("Finding User");
       return await OperationsDB.getById(id, model, populateOptions);
     } catch {
-      return Promise.reject(new Error("Error on paginate"));
+      return Promise.reject(new Error("Error find user by id"));
     }
   }
 }

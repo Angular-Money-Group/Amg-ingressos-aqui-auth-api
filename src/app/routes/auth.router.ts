@@ -11,8 +11,10 @@ export class AuthRouter {
     this.authRouter.post("/registerCustomer", this.authController.registerCustomer);
     this.authRouter.post("/registerProducer", this.authController.registerProducer);
     this.authRouter.post("/refreshToken", this.authController.refreshToken);
-    this.authRouter.post("/resendEmail", this.authController.resendEmail)
-    this.authRouter.post("/confirmEmail/:id", this.authController.confirmationEmail)
-    this.authRouter.post("/resetPassword/:id", this.authController.resetPassword)
+    this.authRouter.post("/resendEmail", this.authController.resendEmail);
+    this.authRouter.post("/confirmEmail/:id", this.authController.confirmationEmail);
+    this.authRouter.post("/resetPassword/:id", this.authController.resetPassword);
+    // this.authRouter.get("/getCustomer/:id", this.authController.findCustomerById);
+    // this.authRouter.get("/getProducer/:id", this.authController.findProducerById);
   }
 }
