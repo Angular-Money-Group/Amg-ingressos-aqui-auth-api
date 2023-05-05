@@ -3,20 +3,89 @@ import customerModel from "../models/customer.model";
 import producerModels from "../models/producer.models";
 import { Logger } from "../services/logger.service";
 import UserService from "../services/user.service";
-import {
-  internalServerErrorResponse,
-  successResponse,
-  unprocessableEntityResponse,
-} from "../utils/responses.utils";
 import { AuthService } from "./../services/auth.service";
 import { IPagination } from "./../utils/pagination.utils";
 import {
   noContentResponse,
   notFoundResponse,
+  unprocessableEntityResponse,
+  userNotFound,
+  internalServerErrorResponse,
+  successResponse
 } from "./../utils/responses.utils";
+import * as Exception from "../exceptions";
+import { Model } from "mongoose";
 
 export class UserController {
   constructor() {}
+
+  public async findCustomerById(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+
+      if (!id) {
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
+      }
+      Logger.infoLog("Pegando costumer por Id");
+
+      console.log(id);
+
+      let user = await UserService.findUser(id, customerModel);
+
+      if (!user) {
+        throw new Exception.UserNotFound("Usuario nao encontrado");
+      }
+
+      return successResponse(res, {customer: user});
+
+    } catch (error: any) {
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.UserNotFound) {
+        Logger.errorLog("User not found");
+        return userNotFound(res);
+      }
+      else {
+        Logger.errorLog("Get Costumer By Id: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
+    }
+  }
+
+  public async findProducerById(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+
+      if (!id) {
+        throw new Exception.UnprocessableEntityResponse("Campos Nulos");
+      }
+      Logger.infoLog("Pegando producer por Id");
+
+      let user = await UserService.findUser(id, producerModels);
+
+      if (!user) {
+        throw new Exception.UserNotFound("Usuario nao encontrado");
+      }
+
+      return successResponse(res, {producer: user});
+
+    } catch (error: any) {
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.UserNotFound) {
+        Logger.errorLog("User not found");
+        return userNotFound(res);
+      }
+      else {
+        Logger.errorLog("Get Producer By Id: " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
+    }
+  }
 
   public async GetAllUsers(req: Request, res: Response) {
     try {
