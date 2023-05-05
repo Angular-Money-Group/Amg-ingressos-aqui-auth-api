@@ -37,7 +37,7 @@ export class OperationsDB {
         })
         .catch((err) => {
           Logger.errorLog(err.message);
-          return err
+          return Promise.reject(err.message);
         });
 
       Logger.infoLog(`Update in ${model.modelName} item of id: ${id}`);
@@ -77,7 +77,7 @@ export class OperationsDB {
       );
     } catch (error: any) {
       Logger.errorLog(error.message);
-      return error.message;
+      return Promise.reject(error.message);
     }
   }
 

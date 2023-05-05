@@ -30,11 +30,11 @@ export const notFoundResponse = (res: Response) => {
 }
 
 export const userNotFound = (res: Response) => {
-    return res.status(404).json({ message: 'Usuário não encontrado' });
+    return res.status(404).json({ message: 'Usuário e/ou senha incorreto(s)' });
 }
 
 export const invalidPassword = (res: Response) => {
-    return res.status(404).json({ message: 'Senha incorreta' });
+    return res.status(404).json({ message: 'Usuário e/ou senha incorreto(s)' });
 }
 
 export const emailAlreadyExists = (res: Response) => {
@@ -45,8 +45,8 @@ export const failToRegister = (res: Response) => {
     return res.status(404).json({ message: 'Erro ao cadastrar usuário, tente novamente em alguns segundos...' });
 }
 
-export const failToUpdatePassword = (res: Response) => {
-    return res.status(404).json({ message: 'Erro ao atualizar senha, tente novamente em alguns segundos...' });
+export const failedToUpdatePassword = (res: Response) => {
+    return res.status(404).json({ message: 'Erro ao atualizar senha' });
 }
 
 export const invalidEmailFormat = (res: Response) => {
@@ -58,7 +58,11 @@ export const logoutError = (res: Response) => {
 }
 
 export const emailNotConfirmed = (res: Response) => {
-    return res.status(404).json({ message: 'Verifique seu email para dar continuidade...' });
+    return res.status(404).json({ message: 'Parece que seu Email ainda não foi verificado... Verifique seu email para dar continuidade' });
+}
+
+export const sessionExpired = (res: Response) => {
+    return res.status(404).json({ message: 'Sua sessão expirou... Faça login novamente para continuar.' });
 }
 
 export const unprocessableEntityResponse = (res: Response) => {

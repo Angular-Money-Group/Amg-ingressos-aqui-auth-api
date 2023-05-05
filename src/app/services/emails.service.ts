@@ -218,7 +218,7 @@ a {
   ) {
     try {
       const user = await OperationsDB.getById(userId, model);
-
+      console.log("AQUIIIIIIIIII" + user);
       if (user.emailConfirmationCode.expirationDate < new Date()) {
         return Promise.reject("Code expiration");
       } else if (user.emailConfirmationCode.code != code) {
@@ -239,7 +239,7 @@ a {
         return Promise.resolve();
       }
     } catch (err: any) {
-      Promise.reject(err);
+      return Promise.reject(err);
     }
   }
 
