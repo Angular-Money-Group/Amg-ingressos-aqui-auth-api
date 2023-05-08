@@ -49,7 +49,7 @@ export class AuthController {
 
       if ("cpf" in user) {
         userType = "Customer";
-      } else if(user.email === process.env.EMAIL_ADMIN){
+      } else if(user.email === process.env.EMAIL_ADMIN || user.email === process.env.EMAIL_ADMIN2){
         userType = "Admin";
       } else if ("cnpj" in user) {
         userType = "Producer";

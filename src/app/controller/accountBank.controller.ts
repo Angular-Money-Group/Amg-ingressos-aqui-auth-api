@@ -3,6 +3,7 @@ import userService from "../services/user.service";
 import { Logger } from "../services/logger.service";
 import ReceiptAccountService from "../services/receipmentAccount.service";
 import {
+  badRequestResponse,
   createdResponse,
   internalServerErrorResponse,
   successResponse,
@@ -43,6 +44,11 @@ export class AccountBankController {
 
       const user = await userService.findUser(id, producerModels);
 
+      if(!user){
+        Logger.errorLog("Usuario não encontrado")
+        return badRequestResponse(res)
+      }
+
       Logger.infoLog(user);
 
       const account = await ReceiptAccountService.registerReceiptBanking(
@@ -55,11 +61,7 @@ export class AccountBankController {
       user.receiptAccounts.push(account._id);
       await user.save();
 
-      const userPop = await user.populate("receiptAccounts");
-
-      Logger.infoLog(userPop);
-
-      return createdResponse(res, userPop, "Conta bancaria");
+      return createdResponse(res, account, "Conta bancaria");
     } catch (err: any) {
       Logger.infoLog(err.message);
       return internalServerErrorResponse(res, err.message);

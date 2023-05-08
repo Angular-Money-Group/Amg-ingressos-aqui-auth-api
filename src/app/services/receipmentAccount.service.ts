@@ -30,6 +30,7 @@ export default class ReceiptAccountService {
   }
 
   public static async registerReceiptBanking(account: any) {
+    Logger.infoLog('registerReceiptBanking')
     const accBank = await OperationsDB.registerItem(
       account,
       receiptAccountsModel

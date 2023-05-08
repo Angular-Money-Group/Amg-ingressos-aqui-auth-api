@@ -88,8 +88,7 @@ export class UserController {
 
   public async GetAllUsers(req: Request, res: Response) {
     try {
-      const { page, pageSize, filter } = req.query as IPagination;
-      const { userType } = req.body;
+      const userType = req.params.userType;
       
       let model;
 
@@ -100,13 +99,6 @@ export class UserController {
       } else {
         return unprocessableEntityResponse(res, "userType não é igual a Producer ou Customer")
       }
-
-      Logger.infoLog("Get Options to paginate");
-      const options = {
-        page: parseInt(page as unknown as string) || 1,
-        pageSize: parseInt(pageSize as unknown as string) || 10,
-        sort: { createdAt: -1 },
-      };
 
       Logger.infoLog("Get users");
       var users: any = await UserService.getAll(model);
