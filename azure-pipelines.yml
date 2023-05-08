@@ -21,23 +21,38 @@ variables:
   vmImageName: 'ubuntu-latest'
 
 stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: Build
+  - stage: Build
     displayName: Build
-    pool:
-      vmImage: $(vmImageName)
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: 'ubuntu-latest'
 
-    steps:
-    - task: NodeTool@0
-      inputs:
-        versionSpec: '16.x'
-      displayName: 'Install Node.js'
+        steps:
+          - checkout: self
 
-    - script: |
-        ssh root@181.215.134.104
-        cd ingressos-aqui/
-        git pull origin master
-        npm run build
-      displayName: 'Access VPS Hostinger, git pull, npm install, and npm run build'
+          - task: PowerShell@2
+            displayName: 'Run SSH commands'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $sshHost = '181.215.134.104'
+                $sshUser = 'root'
+                $sshPrivateKey = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDAVmDRjJnCd+Sfq2pXolZeN/31Q7e4RzXaREoph7/Dbup1oFf3UD6ayZH6ZMrFS6+Qvrg7dUjiR6wxgal8j6G01Gkd7fT7OANO6CYP3aAK/4lrpKh5xkrtYbFMMGBtwm1Crd+PaqrgOGqA2TK0w7qmbw7NBkK0kR2caCtnfdwEz/C1M69Y/iAkByC1XvmM2DCV8zadQ86I4ErXhzf3yu6SZMPiURNZdpFvEgbfnbm/LDaCGhLbUvIpv6lU+Gq0V6Pnr0nDksysZ43P9gMbemlILSER3CTvnbI7aWIAgSAjFzOpAKu/G8N3Q6B9HwZ99PFX1YbjCWMF5D59uBwyrfxqIy5ItPOsdr6jxCYqt78HTe1UbD8Qj2LDIHN9zw3XGBzqRZRFOWmtN1LQbMe7TZJr4kVAdTRPIJVdRTJJvfqlv/4x1Piddr9O4H+C0uB37JhjeZJQsdS1rgD3iO4PdBU0bZi1FLqXc93ylfY8kA3H2dL18di5Hjz/7PEzl2tLOBk= windows@DESKTOP-6J831T5'
+
+                Write-Host "Connecting to VPS..."
+                Write-Host "SSH Host: $sshHost"
+                Write-Host "SSH User: $sshUser"
+
+                $scriptContent = @"
+                cd ingressos-aqui/
+                git pull
+                npm install
+                npm run build
+                "@
+
+                Write-Host "Running commands on VPS..."
+                $session = New-SSHSession -ComputerName $sshHost -Credential $sshUser -KeyFile $sshPrivateKey
+                $output = Invoke-SSHCommand -SessionId $session.SessionId -Command $scriptContent
+                Write-Host "SSH Output: $output"
