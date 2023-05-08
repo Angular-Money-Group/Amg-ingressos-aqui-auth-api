@@ -19,6 +19,11 @@ export class ReceipmentAccountRouter {
       this.tokenValidation.verifyProducerPermission,
       this.accountBankController.registerAccount
     );
+    this.receipmentAccountRouter.put(
+      "/:id",
+      this.tokenValidation.verifyProducerPermission,
+      this.accountBankController.updateAccountReceipt
+    );
     this.receipmentAccountRouter.delete(
       "/:id/:userId",
       this.tokenValidation.verifyProducerPermission,

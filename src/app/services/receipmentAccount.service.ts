@@ -40,6 +40,18 @@ export default class ReceiptAccountService {
     return Promise.resolve(accBank);
   }
 
+  public static async updateAccountReceipt(accountID: any, accountEdit: any){
+    const accBank = await OperationsDB.updateItems(
+      accountID,
+      accountEdit,
+      receiptAccountsModel
+    ).catch((err: any) => {
+      return Promise.reject();
+    });
+
+    return Promise.resolve(accBank);
+  }
+
   public static async decryptData(encryptedData: string): Promise<string> {
     const decipher = crypto.createDecipher(
       "aes-256-cbc",

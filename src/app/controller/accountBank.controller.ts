@@ -80,6 +80,25 @@ export class AccountBankController {
     return successResponse(res, userPop.receiptAccounts);
   }
 
+  public async updateAccountReceipt(req: Request, res: Response) {
+    try{
+
+      const accountId = req.params.id;
+      const { cnpj, fullName, bank, bankAgency, bankAccount, bankDigit } =
+      req.body;
+      
+      if(!accountId){
+        return unprocessableEntityResponse(res)
+      }
+      
+      const acc = await ReceiptAccountService.updateAccountReceipt(accountId, { cnpj, fullName, bank, bankAgency, bankAccount, bankDigit })
+      return successResponse(res, acc)
+    } catch(ex) {
+      return internalServerErrorResponse(res, ex)
+    }
+    } 
+
+
   public async deleteAccountReceipt(req: Request, res: Response) {
     try {
       const { id, userId } = req.params;

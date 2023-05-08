@@ -43,7 +43,7 @@ export class TokenValidation {
           return forbiddenResponse(res);
         }
 
-        if (payload.userType != "Producer") {
+        if (payload.userType != "Producer" && payload.userType != "Admin") {
           Logger.errorLog("User is not Producer");
           return forbiddenResponse(res);
         }

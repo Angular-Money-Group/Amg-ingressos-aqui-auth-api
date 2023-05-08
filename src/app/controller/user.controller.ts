@@ -14,7 +14,6 @@ import {
   successResponse
 } from "./../utils/responses.utils";
 import * as Exception from "../exceptions";
-import { Model } from "mongoose";
 
 export class UserController {
   constructor() {}
@@ -94,9 +93,13 @@ export class UserController {
       
       let model;
 
-      userType === "Producer"
-        ? (model = producerModels)
-        : (model = customerModel);
+      if(userType === "Producer"){
+        model = producerModels
+      } else if(userType === "Customer"){
+        model = customerModel
+      } else {
+        return unprocessableEntityResponse(res, "userType não é igual a Producer ou Customer")
+      }
 
       Logger.infoLog("Get Options to paginate");
       const options = {
@@ -106,7 +109,7 @@ export class UserController {
       };
 
       Logger.infoLog("Get users");
-      var users: any = await UserService.getAll(model, options, filter!);
+      var users: any = await UserService.getAll(model);
 
       users.forEach((element: any) => {
         if(element._id == req.body.user.user._id){

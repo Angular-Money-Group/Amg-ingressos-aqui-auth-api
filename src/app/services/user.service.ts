@@ -1,35 +1,11 @@
 import { OperationsDB } from "../db/operations.db";
 import { Model } from "mongoose";
 import { Logger } from "./logger.service";
-import { IPagination, findPaginated } from "../utils/pagination.utils";
 
 export default class UserService {
-  public static async getAll<M extends Model<any>>(
-    model: M,
-    options: IPagination,
-    filter: string
-  ) {
+  public static async getAll<M extends Model<any>>(model: M) {
     try {
-      Logger.infoLog("Get itens Paginate " + options);
-      if (filter) {
-        return await findPaginated(
-          model,
-          options.page,
-          options.pageSize,
-          {
-            name: { $regex: filter, $options: "i" },
-          },
-          options.sort
-        );
-      } else {
-        return await findPaginated(
-          model,
-          options.page,
-          options.pageSize,
-          {},
-          options.sort
-        );
-      }
+      return Promise.resolve(await OperationsDB.getAll(model));
     } catch {
       return Promise.reject(new Error("Error on paginate"));
     }
@@ -42,7 +18,7 @@ export default class UserService {
   ) {
     try {
       Logger.infoLog("Update Itens");
-      return await OperationsDB.updateItems(id, user, model)
+      return await OperationsDB.updateItems(id, user, model);
     } catch {
       return Promise.reject(new Error("Error on Update"));
     }
@@ -56,7 +32,6 @@ export default class UserService {
       return Promise.reject(new Error("Error on delete"));
     }
   }
-
 
   public static async findUser<M extends Model<any>>(
     id: string,
