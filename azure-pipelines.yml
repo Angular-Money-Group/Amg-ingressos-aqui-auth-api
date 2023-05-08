@@ -20,12 +20,6 @@ variables:
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
-variables:
-  vmImageName: 'ubuntu-latest'
-  vpsHost: '181.215.134.104'
-  vpsUser: 'root'
-  repositoryPath: 'ingressos-aqui/'
-
 stages:
   - stage: Build
     displayName: Build
@@ -33,7 +27,7 @@ stages:
       - job: Build
         displayName: Build
         pool:
-          vmImage: $(vmImageName)
+          vmImage: ubuntu-latest
         
         steps:
           - task: SSH@0
@@ -41,8 +35,8 @@ stages:
               sshEndpoint: 'SSH Endpoint'
               runOptions: 'commands'
               commands: |
-                ssh $(vpsUser)@$(vpsHost)
-                cd $(repositoryPath)
+                ssh root@181.215.134.104
+                cd ingressos-aqui/
                 git pull
                 npm install
                 npm run build
