@@ -52,7 +52,6 @@ stages:
                 npm run build
                 "@
 
-                Write-Host "Running commands on VPS..."
-                $session = New-SSHSession -ComputerName $sshHost -Credential $sshUser -KeyFile $sshPrivateKey
-                $output = Invoke-SSHCommand -SessionId $session.SessionId -Command $scriptContent
-                Write-Host "SSH Output: $output"
+                $ssh = New-SSHSession -ComputerName $sshHost -Credential (Get-Credential -UserName $sshUser -PrivateKey $sshPrivateKey)
+                Invoke-SSHCommand -SessionId $ssh.SessionId -Command $scriptContent
+                Remove-SSHSession -SessionId $ssh.SessionId
