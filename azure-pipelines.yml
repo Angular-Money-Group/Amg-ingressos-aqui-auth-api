@@ -38,7 +38,6 @@ stages:
     - script: |
         ssh root@181.215.134.104
         cd ingressos-aqui/
-        git pull
-        npm install
+        git pull origin master
         npm run build
       displayName: 'Access VPS Hostinger, git pull, npm install, and npm run build'
