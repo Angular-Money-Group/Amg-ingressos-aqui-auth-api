@@ -21,22 +21,24 @@ variables:
   vmImageName: 'ubuntu-latest'
 
 stages:
-  - stage: Build
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
     displayName: Build
-    jobs:
-      - job: Build
-        displayName: Build
-        pool:
-          vmImage: ubuntu-latest
-        
-        steps:
-          - task: SSH@0
-            inputs:
-              sshEndpoint: 'SSH Endpoint'
-              runOptions: 'commands'
-              commands: |
-                ssh root@181.215.134.104
-                cd ingressos-aqui/
-                git pull
-                npm install
-                npm run build
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '16.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        ssh root@181.215.134.104
+        cd ingressos-aqui/
+        git pull
+        npm install
+        npm run build
+      displayName: 'Access VPS Hostinger, git pull, npm install, and npm run build'
