@@ -88,7 +88,7 @@ export class UserController {
 
   public async GetAllUsers(req: Request, res: Response) {
     try {
-      const userType = req.params.userType;
+      const userType = req.query.userType;
       
       let model;
 
