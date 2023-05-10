@@ -4,8 +4,12 @@ import { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
 import { internalServerErrorResponse, sessionExpired } from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";
+<<<<<<< Updated upstream
 import producerModels from "./../models/producer.models";
 import * as Exception from "../exceptions";
+=======
+import producerModel from "./../models/producer.models";
+>>>>>>> Stashed changes
 import {
   badRequestResponse,
   successResponse,
@@ -36,7 +40,7 @@ export class AuthController {
 
       user = await Promise.all([
         AuthService.findUserByEmail(email, customerModel),
-        AuthService.findUserByEmail(email, producerModels),
+        AuthService.findUserByEmail(email, producerModel),
       ]);
 
       user = user.find((userOb: any) => {
@@ -136,11 +140,11 @@ export class AuthController {
         throw new Exception.InvalidEmailFormat("Formato de email invalido")
       }
 
-      const producer = await AuthService.findUserByEmail(email, producerModels);
+      const producer = await AuthService.findUserByEmail(email, producerModel);
 
       const isCustomer = await AuthService.findUserByEmail(
         email,
-        producerModels
+        producerModel
       );
 
       if (isCustomer || producer) {
@@ -174,7 +178,7 @@ export class AuthController {
           id: newProducer._id,
           email: newProducer.email,
         },
-        producerModels
+        producerModel
       );
 
       delete newProducer.password;
@@ -226,7 +230,7 @@ export class AuthController {
 
       const isProducer = await AuthService.findUserByEmail(
         email,
-        producerModels
+        producerModel
       );
 
       if (customer || isProducer) {
@@ -360,8 +364,13 @@ export class AuthController {
 
       let user = await AuthService.findUserByEmail(req.body.email, customerModel);
 
+<<<<<<< Updated upstream
       if (!user)
         user = await AuthService.findUserByEmail(req.body.email, producerModels);
+=======
+    if (!user)
+      user = await AuthService.findUserByEmail(req.body.email, producerModel);
+>>>>>>> Stashed changes
 
       if (!user) {
         return successResponse(res, undefined);
@@ -371,6 +380,7 @@ export class AuthController {
         Logger.infoLog("Reenviando email");
         const emailService = new EmailService();
 
+<<<<<<< Updated upstream
         emailService.sendEmailToConfirmationAccount(
           {
             id: user._id,
@@ -378,6 +388,15 @@ export class AuthController {
           },
           producerModels
         );
+=======
+      emailService.sendEmailToConfirmationAccount(
+        {
+          id: user._id,
+          email: user.email,
+        },
+        producerModel
+      );
+>>>>>>> Stashed changes
 
         return successResponse(res, undefined);
       }
@@ -423,7 +442,7 @@ export class AuthController {
       if (userType === "Producer") {
         Logger.infoLog("Validating Producer Email");
         await emailService
-          .confirmationEmail(userID, codeConfirmation, producerModels)
+          .confirmationEmail(userID, codeConfirmation, producerModel)
           .then(() => {
             successResponse(res, undefined);
           })

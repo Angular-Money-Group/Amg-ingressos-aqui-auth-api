@@ -10,7 +10,7 @@ import {
   unprocessableEntityResponse,
 } from "../utils/responses.utils";
 import { Request, Response } from "express";
-import producerModels from "../models/producer.models";
+import producerModel from "../models/producer.models";
 
 export class AccountBankController {
   constructor() {}
@@ -42,7 +42,7 @@ export class AccountBankController {
         return unprocessableEntityResponse(res);
       }
 
-      const user = await userService.findUser(id, producerModels);
+      const user = await userService.findUser(id, producerModel);
 
       if(!user){
         Logger.errorLog("Usuario não encontrado")
@@ -73,7 +73,7 @@ export class AccountBankController {
 
     if (!id) return unprocessableEntityResponse(res);
 
-    const user = await userService.findUser(id, producerModels);
+    const user = await userService.findUser(id, producerModel);
 
     Logger.infoLog("Populate user");
     const userPop = await user.populate("receiptAccounts");
@@ -107,7 +107,7 @@ export class AccountBankController {
 
       if (!id || !userId) return unprocessableEntityResponse(res);
 
-      const user = await userService.findUser(userId, producerModels);
+      const user = await userService.findUser(userId, producerModel);
 
       await ReceiptAccountService.deleteItems(id)
         .then(() => {

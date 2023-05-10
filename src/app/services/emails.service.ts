@@ -4,7 +4,7 @@ import nodemailer, { SendMailOptions, Transporter } from "nodemailer";
 import { OperationsDB } from "../db/operations.db";
 import { Logger } from "./logger.service";
 import customerModel from "../models/customer.model";
-import producerModels from "../models/producer.models";
+import producerModel from "../models/producer.models";
 import { AuthService } from "./auth.service";
 
 dotenv.config();
@@ -121,7 +121,7 @@ export class EmailService {
   public async sendEmailForForgotPassword(email: any) {
     const customer = await OperationsDB.findByEmail(email, customerModel);
 
-    const producer = await OperationsDB.findByEmail(email, producerModels);
+    const producer = await OperationsDB.findByEmail(email, producerModel);
 
     if (customer) {
       customer.userType = "Customer";

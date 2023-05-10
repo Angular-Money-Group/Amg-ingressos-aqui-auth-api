@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import customerModel from "../models/customer.model";
-import producerModels from "../models/producer.models";
+import producerModel from "../models/producer.models";
 import { Logger } from "../services/logger.service";
 import UserService from "../services/user.service";
 import { AuthService } from "./../services/auth.service";
@@ -92,6 +92,7 @@ export class UserController {
       
       let model;
 
+<<<<<<< Updated upstream
       if(userType === "Producer"){
         model = producerModels
       } else if(userType === "Customer"){
@@ -99,6 +100,18 @@ export class UserController {
       } else {
         return unprocessableEntityResponse(res, "userType não é igual a Producer ou Customer")
       }
+=======
+      userType === "Producer"
+        ? (model = producerModel)
+        : (model = customerModel);
+
+      Logger.infoLog("Get Options to paginate");
+      const options = {
+        page: parseInt(page as unknown as string) || 1,
+        pageSize: parseInt(pageSize as unknown as string) || 10,
+        sort: { createdAt: -1 },
+      };
+>>>>>>> Stashed changes
 
       Logger.infoLog("Get users");
       var users: any = await UserService.getAll(model);
@@ -216,7 +229,7 @@ export class UserController {
         const userUpdate = await UserService.updateUser(
           id,
           user,
-          producerModels
+          producerModel
         );
         
         const { accessToken, refreshToken } = await AuthService.generateTokens({
@@ -252,7 +265,7 @@ export class UserController {
       let model;
 
       userType === "Producer"
-        ? (model = producerModels)
+        ? (model = producerModel)
         : (model = customerModel);
 
       const userUpdate = await UserService.updateUser(id, {isActive: false}, model);
