@@ -8,10 +8,13 @@ import {
   internalServerErrorResponse,
   successResponse,
   unprocessableEntityResponse,
+  invalidPayment,
+  userNotFound
 } from "../utils/responses.utils";
 import { Request, Response } from "express";
 import customerModel from "../models/customer.model";
 import mongoose from "mongoose";
+import * as Exception from "../exceptions";
 
 export class PaymentMethodController {
   constructor() {}
@@ -38,7 +41,7 @@ export class PaymentMethodController {
         !id ||
         !paymentMethods.typePayment
       ) {
-        return unprocessableEntityResponse(res);
+        throw new Exception.UnprocessableEntityResponse("Campos vazios");
       }
 
       if (["debit", "credit"].includes(paymentMethods.typePayment)) {
@@ -51,15 +54,17 @@ export class PaymentMethodController {
             !paymentMethods.installments ||
             !paymentMethods.nickname) {
               
-            return unprocessableEntityResponse(res);
+              throw new Exception.UnprocessableEntityResponse("Campos vazios");
             }
+      } else {
+        throw new Exception.InvalidPayment("Forma de pagamento invalida");
       }
 
       const user = await userService.findUser(id, customerModel);
 
       if(!user){
         Logger.errorLog("Usuario não encontrado")
-        return badRequestResponse(res)
+        throw new Exception.UserNotFound("Usuario nao encontrado");
       }
 
       Logger.infoLog(user);
@@ -67,7 +72,7 @@ export class PaymentMethodController {
       const paymentMethod = await PaymentMethodService.registerPaymentMethod(
         paymentMethods
       ).catch((err) => {
-        return internalServerErrorResponse(res, err.message);
+        throw new Exception.InternalServerErrorResponse("InternalServerErrorResponse");
       });
 
       Logger.infoLog(paymentMethod);
@@ -76,60 +81,89 @@ export class PaymentMethodController {
 
       return createdResponse(res, paymentMethod, "Metodo de Pagamento");
     } catch (err: any) {
-      Logger.infoLog(err.message);
-      return internalServerErrorResponse(res, err.message);
+      if (err instanceof Exception.UnauthorizedResponse) {
+        return unprocessableEntityResponse(res);
+      }
+      else if (err instanceof Exception.InvalidPayment) {
+        return invalidPayment(res);
+      }
+      else if (err instanceof Exception.UserNotFound) {
+        return userNotFound(res);
+      }
+      else if (err instanceof Exception.InternalServerErrorResponse) {
+        return internalServerErrorResponse(res, err.message);
+      }
+      else {
+        Logger.infoLog(err.message);
+        return internalServerErrorResponse(res, err.message);
+      }
     }
   }
 
   public async getPaymentMethods(req: Request, res: Response) {
-    const id = req.params.id;
+    try {
+      const id = req.params.id;
 
-    if (!id) return unprocessableEntityResponse(res);
+      if (!id) throw new Exception.UnprocessableEntityResponse("Campos Nulos");
 
-    const user = await userService.findUser(id, customerModel);
-    console.log(user.paymentMethods);
-    Logger.infoLog("Populate user");
-    const userPpl = await user.populate("paymentMethods");
-    // const userPpl = await customerModel.findById(id).populate('paymentMethods').exec();
+      const user = await userService.findUser(id, customerModel);
+      console.log(user.paymentMethods);
+      Logger.infoLog("Populate user");
+      const userPpl = await user.populate("paymentMethods");
+      // const userPpl = await customerModel.findById(id).populate('paymentMethods').exec();
 
-    console.log(userPpl);
-        
-    Logger.infoLog("Return paymentMethods");
-    // return successResponse(res, userPpl.paymentMethods);
-    return successResponse(res, userPpl);
+      console.log(userPpl);
+          
+      Logger.infoLog("Return paymentMethods");
+      // return successResponse(res, userPpl.paymentMethods);
+      return successResponse(res, userPpl);
+    } catch (err: any) {
+      if (err instanceof Exception.UnprocessableEntityResponse) {
+        return unprocessableEntityResponse(res);
+      }
+      else {
+        Logger.infoLog(err.message);
+        return internalServerErrorResponse(res, err.message);
+      }
+    }
   }
 
   public async updatePaymentMethods(req: Request, res: Response) {
     try{
-
       const paymentMethodId = req.params.id;
       const { typePayment, cardNumber, holder, expirationDate, securityCode, saveCard, brand, installments, nickname } =
         req.body;
       
       if(!paymentMethodId){
-        return unprocessableEntityResponse(res)
+        throw new Exception.UnprocessableEntityResponse("Campos Vazios");
       }
       
       const acc = await PaymentMethodService.updatePaymentMethod(paymentMethodId, { typePayment, cardNumber, holder, expirationDate, securityCode, saveCard, brand, installments, nickname })
       return successResponse(res, acc)
-    } catch(ex) {
-      return internalServerErrorResponse(res, ex)
+    } catch(err: any) {
+      if (err instanceof Exception.UnprocessableEntityResponse) {
+        return unprocessableEntityResponse(res);
+      }
+      else{
+        return internalServerErrorResponse(res, err)
+      }
     }
-    } 
+  } 
 
 
   public async deletePaymentMethods(req: Request, res: Response) {
     try {
       const { id, userId } = req.params;
 
-      if (!id || !userId) return unprocessableEntityResponse(res);
+      if (!id || !userId) throw new Exception.UnprocessableEntityResponse("campos vazios");
+      // if (!id || !userId) return unprocessableEntityResponse(res);
 
       const user = await userService.findUser(userId, customerModel);
 
 
       if(!user){
-        Logger.errorLog("Usuario não encontrado")
-        return badRequestResponse(res)
+        Logger.errorLog("Usuario não encontrado");
+        throw new Exception.UserNotFound("Usuario nao encontrado");
       }
 
       await PaymentMethodService.deleteItems(id)
@@ -145,8 +179,16 @@ export class PaymentMethodController {
           return internalServerErrorResponse(res, err.message);
         });
     } catch (error: any) {
-      Logger.infoLog("Error " + error.message);
-      return internalServerErrorResponse(res, error.message);
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        return unprocessableEntityResponse(res);
+      }
+      else if (error instanceof Exception.UserNotFound) {
+        return userNotFound(res);
+      }
+      else {
+        Logger.infoLog("Error " + error.message);
+        return internalServerErrorResponse(res, error.message);
+      }
     }
   }
 }
