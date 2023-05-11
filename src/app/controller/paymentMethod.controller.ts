@@ -138,11 +138,6 @@ export class PaymentMethodController {
           Logger.infoLog("Delete id from user model");
           
           userService.removeValueFromArrayField(userId, "paymentMethods", customerModel, id);
-          // const idPayMeth = new mongoose.Types.ObjectId(id);
-          // const index = user.paymentMethods.findIndex((element: {idPayMeth: mongoose.Types.ObjectId}) => element.idPayMeth === idPayMeth);
-          // user.paymentMethods.splice(index, 1);
-
-          user.save();
           return successResponse(res, null);
         })
         .catch((err: any) => {

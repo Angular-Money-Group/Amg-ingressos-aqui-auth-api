@@ -116,9 +116,8 @@ export class AccountBankController {
 
       await ReceiptAccountService.deleteItems(id)
         .then(() => {
-          Logger.infoLog("Delete id from user model");
-          user.receiptAccounts.splice(id, 1);
-          user.save();
+          
+          userService.removeValueFromArrayField(userId, "receiptAccounts", producerModels, id);
           return successResponse(res, null);
         })
         .catch((err: any) => {

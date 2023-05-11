@@ -153,7 +153,7 @@ export class OperationsDB {
   public static async removeValueFromArrayField<M extends Model<any>>(elementId: string, fieldName: string, model: M, idExternal: mongoose.Types.ObjectId) {
     const element = await model.findOneAndUpdate(
       { _id: elementId },
-      { $pull: { [fieldName]: { _id: new mongoose.Types.ObjectId(idExternal) } } },
+      { $pull: { [fieldName]: { $in: [idExternal] } } },
       { new: true }
     );
   

@@ -51,6 +51,7 @@ export default class UserService {
     // const idObject = new mongoose.Types.ObjectId(valueToRemove);
     const { ObjectId } = require('mongodb');
     const idExternal =  new ObjectId(valueToRemove);
+    console.log("ObjectId: " + valueToRemove);
     await OperationsDB.removeValueFromArrayField(elementId, fieldName, model, idExternal).then(() => {
       Logger.infoLog('Deleted Succefull')
       return Promise.resolve()
