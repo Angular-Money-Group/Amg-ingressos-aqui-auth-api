@@ -8,6 +8,7 @@ import { connection } from "./app/db/database";
 import { AuthRouter } from "./app/routes/auth.router";
 import swaggerDocs from "./swagger";
 import { ReceipmentAccountRouter } from "./app/routes/receipmentAccount.router";
+import { PaymentMethodRouter } from './app/routes/paymentMethod.router';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ export class App {
     private authRouter: AuthRouter,
     private userRouter: UserRouter,
     private receipmentAccountRouter: ReceipmentAccountRouter,
+    private paymentMethodRouter: PaymentMethodRouter,
     private supportRouter: SupportRouter
   ) {
     this.server = express();
@@ -55,6 +57,10 @@ export class App {
     this.server.use(
       "/v1/accountBank",
       this.receipmentAccountRouter.receipmentAccountRouter
+    );
+    this.server.use(
+      "/v1/paymentMethod",
+      this.paymentMethodRouter.paymentMethodRouter
     );
     this.server.use(
       "/v1/support",
