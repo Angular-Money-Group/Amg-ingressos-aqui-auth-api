@@ -1,4 +1,4 @@
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { Logger } from "../services/logger.service";
 
 export class OperationsDB {
@@ -84,6 +84,7 @@ export class OperationsDB {
   public static async getAll<M extends Model<any>>(model: M): Promise<any> {
     try {
       Logger.infoLog(`Get all ${model.modelName}`);
+      console.log(model);
       return Promise.resolve(await model.find());
     } catch (error: any) {
       Logger.errorLog(error.message);
@@ -147,5 +148,15 @@ export class OperationsDB {
       Logger.errorLog(error.message);
       return Promise.reject(error.message);
     }
+  }
+
+  public static async removeValueFromArrayField<M extends Model<any>>(elementId: string, fieldName: string, model: M, idExternal: mongoose.Types.ObjectId) {
+    const element = await model.findOneAndUpdate(
+      { _id: elementId },
+      { $pull: { [fieldName]: { $in: [idExternal] } } },
+      { new: true }
+    );
+  
+    return element;
   }
 }

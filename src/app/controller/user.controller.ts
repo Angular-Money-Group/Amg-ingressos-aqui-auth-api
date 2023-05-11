@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Model } from "mongoose";
 import customerModel from "../models/customer.model";
 import producerModels from "../models/producer.models";
 import { Logger } from "../services/logger.service";
@@ -11,9 +12,11 @@ import {
   unprocessableEntityResponse,
   userNotFound,
   internalServerErrorResponse,
-  successResponse
+  successResponse,
+  modelNotFound
 } from "./../utils/responses.utils";
 import * as Exception from "../exceptions";
+import mongoose from "mongoose";
 
 export class UserController {
   constructor() {}
@@ -90,20 +93,23 @@ export class UserController {
     try {
       const userType = req.query.userType;
       
-      let model;
+      let model: Model<any>;
 
       if(userType === "Producer"){
         model = producerModels
       } else if(userType === "Customer"){
         model = customerModel
       } else {
-        return unprocessableEntityResponse(res, "userType não é igual a Producer ou Customer")
+        throw new Exception.ModelNotFound("userType não é igual a Producer ou Customer")
       }
 
       Logger.infoLog("Get users");
-      var users: any = await UserService.getAll(model);
+      var users = await UserService.getAll(model);
+      console.log(users);
 
       users.forEach((element: any) => {
+        console.log("ELEMENTO " + element);
+        console.log("req.body.user.user._id " + req.body.user.user._id);
         if(element._id == req.body.user.user._id){
           users.splice(users.indexOf(element))
         }
@@ -120,6 +126,9 @@ export class UserController {
 
       return successResponse(res, users);
     } catch (err: any) {
+      if (err instanceof Exception.ModelNotFound) {
+        return modelNotFound(res);
+      }
       Logger.errorLog(err.message);
       return internalServerErrorResponse(res, err.message);
     }

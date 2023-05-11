@@ -65,6 +65,10 @@ export const sessionExpired = (res: Response) => {
     return res.status(404).json({ message: 'Sua sessão expirou... Faça login novamente para continuar.' });
 }
 
+export const modelNotFound = (res: Response) => {
+    return res.status(404).json({ message: '"userType não é igual a Producer ou Customer"' });
+}
+
 export const unprocessableEntityResponse = (res: Response, data?: any) => {
     return res.status(422).json({ message: "Ah não! Parece que você não preencheu todos os campos", data });
 }

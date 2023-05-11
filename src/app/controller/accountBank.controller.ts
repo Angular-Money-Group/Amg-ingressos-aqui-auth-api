@@ -109,11 +109,15 @@ export class AccountBankController {
 
       const user = await userService.findUser(userId, producerModels);
 
+      if(!user){
+        Logger.errorLog("Usuario não encontrado")
+        return badRequestResponse(res)
+      }
+
       await ReceiptAccountService.deleteItems(id)
         .then(() => {
-          Logger.infoLog("Delete id from user model");
-          user.receiptAccounts.splice(id, 1);
-          user.save();
+          
+          userService.removeValueFromArrayField(userId, "receiptAccounts", producerModels, id);
           return successResponse(res, null);
         })
         .catch((err: any) => {

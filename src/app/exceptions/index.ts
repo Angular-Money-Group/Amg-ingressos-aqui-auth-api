@@ -4,7 +4,7 @@
 
 export { UnauthorizedResponse} from './unauthorizedResponse';
 export {ForbiddenResponse} from './forbiddenResponse';
-// export {NotFoundResponse} from './notFoundResponse';
+export {ModelNotFound} from './modelNotFound';
 export {UserNotFound} from './userNotFound';
 export {InvalidPassword} from './invalidPassword';
 export {EmailAlreadyExists} from './emailAlreadyExists';

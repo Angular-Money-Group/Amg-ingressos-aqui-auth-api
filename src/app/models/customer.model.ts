@@ -21,7 +21,8 @@ const customerModel = new mongoose.Schema({
     code: { type: String },
     expirationDate: {type: Date } 
    },
-  tickets: [{type:  mongoose.Schema.Types.ObjectId, ref: 'Tickets'}]
+  tickets: [{type:  mongoose.Schema.Types.ObjectId, ref: 'Tickets'}],
+  paymentMethods: [{ type: mongoose.Schema.Types.ObjectId, ref: 'PaymentMethod'}]
 });
 
 export default mongoose.model("Customer", customerModel);
