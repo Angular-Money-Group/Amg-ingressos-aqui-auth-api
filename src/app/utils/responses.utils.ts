@@ -66,7 +66,11 @@ export const sessionExpired = (res: Response) => {
 }
 
 export const modelNotFound = (res: Response) => {
-    return res.status(404).json({ message: '"userType não é igual a Producer ou Customer"' });
+    return res.status(404).json({ message: 'userType não é igual a Producer ou Customer' });
+}
+
+export const invalidPayment = (res: Response) => {
+    return res.status(404).json({ message: 'Forma de pagamento inválida' });
 }
 
 export const unprocessableEntityResponse = (res: Response, data?: any) => {
