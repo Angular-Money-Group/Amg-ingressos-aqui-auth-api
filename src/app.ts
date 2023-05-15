@@ -52,7 +52,7 @@ export class App {
 
   private router() {
     Logger.infoLog("Loading routes");
-    this.server.use(this.authRouter.authRouter);
+    this.server.use("/v1/auth", this.authRouter.authRouter);
     this.server.use("/v1/profile", this.userRouter.userRouter);
     this.server.use(
       "/v1/accountBank",
