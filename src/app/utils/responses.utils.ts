@@ -10,7 +10,7 @@ export const createdResponse = (res: Response, data: any, object: string) => {
 }
 
 export const noContentResponse = (res: Response) => {
-    return res.status(204);
+    return res.status(204).json({});
 }
 
 export const badRequestResponse = (res: Response) => {

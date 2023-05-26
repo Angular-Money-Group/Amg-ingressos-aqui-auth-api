@@ -1,22 +1,20 @@
 import { Request, Response } from "express";
 import { Model } from "mongoose";
+import * as Exception from "../exceptions";
 import customerModel from "../models/customer.model";
 import producerModels from "../models/producer.models";
 import { Logger } from "../services/logger.service";
 import UserService from "../services/user.service";
 import { AuthService } from "./../services/auth.service";
-import { IPagination } from "./../utils/pagination.utils";
 import {
+  internalServerErrorResponse,
+  modelNotFound,
   noContentResponse,
   notFoundResponse,
-  unprocessableEntityResponse,
-  userNotFound,
-  internalServerErrorResponse,
   successResponse,
-  modelNotFound
+  unprocessableEntityResponse,
+  userNotFound
 } from "./../utils/responses.utils";
-import * as Exception from "../exceptions";
-import mongoose from "mongoose";
 
 export class UserController {
   constructor() {}
