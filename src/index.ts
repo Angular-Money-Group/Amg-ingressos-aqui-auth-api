@@ -42,7 +42,7 @@ export class Index {
 
 new Index(
   new AuthRouter(new AuthController()),
-  new SupportRouter(new SupportController()),
+  new SupportRouter(new SupportController(), new TokenValidation()),
   new ReceipmentAccountRouter(new AccountBankController(), new TokenValidation()),
   new PaymentMethodRouter(new PaymentMethodController(), new TokenValidation()),
   new UserRouter(new UserController(), new TokenValidation())
