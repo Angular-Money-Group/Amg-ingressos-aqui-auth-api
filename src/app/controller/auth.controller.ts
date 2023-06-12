@@ -454,6 +454,17 @@ export class AuthController {
           throw new Exception.InvalidEmailFormat("Formato de email invalido")
       }
 
+      const customer = await AuthService.findUserByEmail(email, customerModel);
+
+      const isProducer = await AuthService.findUserByEmail(
+        email,
+        producerModels
+      );
+
+      if (!customer && !isProducer) {
+        throw new Exception.UserNotFound("Email não Cadastrado");
+      }
+
       const emailService = new EmailService();
       await emailService.sendEmailForForgotPassword(email);
 
@@ -463,6 +474,10 @@ export class AuthController {
       if (error instanceof Exception.InvalidEmailFormat) {
         Logger.errorLog("Invalid email format");
         return invalidEmailFormat(res);
+      }
+      if (error instanceof Exception.UserNotFound) {
+        Logger.errorLog("User is not registered.");
+            successResponse(res, undefined);
       }
       else {
         Logger.errorLog("Forgot Password Error: " + error.message);
