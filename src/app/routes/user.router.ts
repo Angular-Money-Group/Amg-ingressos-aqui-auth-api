@@ -11,7 +11,7 @@ export class UserRouter {
         this.userRouter.put('/:id', this.tokenValidation.authenticateToken, this.userController.updateUser)
         this.userRouter.delete('/:id', this.tokenValidation.verifyAdminPermission, this.userController.deleteUser)
         this.userRouter.get("/getCustomer/:id", this.tokenValidation.verifyAdminPermission, this.userController.findCustomerById);  
-        this.userRouter.get("/getProducer/:id", this.tokenValidation.verifyAdminPermission, this.userController.findProducerById);
+        this.userRouter.get("/getProducer/:id", this.userController.findProducerById);
     }
 
 }
