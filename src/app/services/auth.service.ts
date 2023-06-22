@@ -5,9 +5,10 @@ import { OperationsDB } from "../db/operations.db";
 import CustomerModel from "../models/customer.model";
 import ProducerModel from "../models/producer.models";
 import customerModel, { CustomerType } from "./../models/customer.model";
-import { ProducerType } from "./../models/producer.models";
+import producerModels, { ProducerType } from "./../models/producer.models";
 import { Logger } from "./logger.service";
 import { Model } from "mongoose";
+import colabModels, { ColabType } from "../models/colab.models";
 
 dotenv.config();
 
@@ -31,6 +32,20 @@ export class AuthService {
       });
 
     return Promise.resolve(user);
+  }
+
+  public static async registerColab(colab: ColabType, producerId: string): Promise<ColabType>{
+    try{
+
+      await OperationsDB.registerItem(colab, colabModels).then(async (rColab: any) => {
+        return await OperationsDB.addIdToRelatedCollection(producerId, rColab._id, 'colabs', producerModels)
+      })
+      
+      return colab
+    } catch(err: any){
+      return Promise.reject(err)
+
+    }
   }
 
   public static async comparePassword(

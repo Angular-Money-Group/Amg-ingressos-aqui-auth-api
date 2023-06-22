@@ -1,8 +1,8 @@
 import EmailService from "./../services/emails.service";
 import { Request, Response } from "express";
-import { AuthService } from "../services/auth.service";
+import authService, { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
-import { internalServerErrorResponse, sessionExpired } from "../utils/responses.utils";
+import { createdResponse, internalServerErrorResponse, sessionExpired } from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";
 import producerModels from "./../models/producer.models";
 import * as Exception from "../exceptions";
@@ -112,6 +112,24 @@ export class AuthController {
         return internalServerErrorResponse(res, error.message);
       }
     }
+  }
+
+  public async registerColab(req: Request, res: Response) {
+    try {
+      const { name, cpf, email, password, producerId } =
+        req.body;
+
+        if(!name|| !cpf|| !email|| !password|| !producerId) return unprocessableEntityResponse(res)
+
+        const hashPassword = await AuthService.hashPassword(password);
+        Logger.infoLog("Gen Passhash " + hashPassword);
+  
+        const resultData = await AuthService.registerColab({name, cpf, email, password: hashPassword}, producerId)
+
+        return createdResponse(res, resultData, 'Colaborador')
+      } catch(err: any) {
+        return internalServerErrorResponse(res, err.message);
+      }
   }
 
   public async registerProducer(req: Request, res: Response) {

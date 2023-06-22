@@ -22,6 +22,7 @@ const producerModel = new mongoose.Schema({
   isEmailVerified: { type: Boolean, required: true, default: false },
   isActive: { type: Boolean, required: true, default: true },
   myTickets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tickets" }],
+  colabs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Colab" }],
   eventsCreated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
   receiptAccounts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ReceiptAccounts'}]
 });
