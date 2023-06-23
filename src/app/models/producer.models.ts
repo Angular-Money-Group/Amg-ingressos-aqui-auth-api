@@ -7,15 +7,15 @@ const producerModel = new mongoose.Schema({
   password: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   corporateName: { type: String, required: true },
-  cep: {type: String},
-  address: {type: String},
-  houseNumber: {type: String},
-  complement: {type: String},
-  neighborhood: {type: String},
-  city: {type: String},
-  state: {type: String},
+  cep: { type: String },
+  address: { type: String },
+  houseNumber: { type: String },
+  complement: { type: String },
+  neighborhood: { type: String },
+  city: { type: String },
+  state: { type: String },
   emailConfirmationCode: {
-    code: { type: String , default: null},
+    code: { type: String, default: null },
     expirationDate: { type: Date, default: null },
   },
   isPhoneVerified: { type: Boolean, required: true, default: false },
@@ -24,7 +24,9 @@ const producerModel = new mongoose.Schema({
   myTickets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tickets" }],
   colabs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Colab" }],
   eventsCreated: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
-  receiptAccounts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ReceiptAccounts'}]
+  receiptAccounts: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "ReceiptAccounts" },
+  ],
 });
 
 export default mongoose.model("Producer", producerModel);
@@ -34,9 +36,25 @@ export interface ProducerType {
   name: string;
   cnpj: string;
   email: string;
-  password: string | undefined;
+  password: string;
   phoneNumber: string;
   corporateName: string;
+  cep?: string;
+  address?: string;
+  houseNumber?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  emailConfirmationCode?: {
+    code: string | null;
+    expirationDate: Date | null;
+  };
   isPhoneVerified: boolean;
   isEmailVerified: boolean;
+  isActive: boolean;
+  myTickets?: Array<string>;
+  colabs?: Array<string>;
+  eventsCreated?: Array<string>;
+  receiptAccounts?: Array<string>;
 }

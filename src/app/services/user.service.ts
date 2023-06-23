@@ -1,12 +1,21 @@
 import { OperationsDB } from "../db/operations.db";
 import { Model } from "mongoose";
 import { Logger } from "./logger.service";
+import producerModels from "../models/producer.models";
 
 export default class UserService {
   public static async getAll<M extends Model<any>>(model: M) {
     try {
       console.log("User Service, model received:" + model.modelName);
       return Promise.resolve(await OperationsDB.getAll(model));
+    } catch {
+      return Promise.reject(new Error("Error on paginate"));
+    }
+  }
+
+  public static async getAllColabs(producerId: string) {
+    try {
+      return Promise.resolve(await OperationsDB.getById(producerId, producerModels, "colabs"));
     } catch {
       return Promise.reject(new Error("Error on paginate"));
     }
