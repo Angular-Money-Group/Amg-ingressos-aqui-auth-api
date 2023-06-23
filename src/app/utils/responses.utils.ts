@@ -29,6 +29,10 @@ export const notFoundResponse = (res: Response) => {
     return res.status(404).json({ message: 'Não foi possivel encontrar o recurso solicitado' });
 }
 
+export const eventNotFound = (res: Response) => {
+    return res.status(404).json({ message: 'Evento não encontrado' });
+}
+
 export const userNotFound = (res: Response) => {
     return res.status(404).json({ message: 'Usuário e/ou senha incorreto(s)' });
 }

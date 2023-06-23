@@ -30,7 +30,7 @@ export const mockCustomerModel = mongoose.model(
   })
 );
 
-export const eventModel = mongoose.model(
+export const mockEventModel = mongoose.model(
   "MockEvent",
   new mongoose.Schema({
     name: { type: String, required: true },
@@ -49,4 +49,4 @@ export const eventModel = mongoose.model(
   })
 );
 
-export default {mockModel, mockCustomerModel, eventModel};
+export default {mockModel, mockCustomerModel, mockEventModel};

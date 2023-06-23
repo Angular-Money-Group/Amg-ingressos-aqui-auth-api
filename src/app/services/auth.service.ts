@@ -1,3 +1,4 @@
+import eventModel from "../models/event.models";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -9,6 +10,8 @@ import producerModels, { ProducerType } from "./../models/producer.models";
 import { Logger } from "./logger.service";
 import { Model } from "mongoose";
 import colabModels, { ColabType } from "../models/colab.models";
+import * as Exception from "../exceptions";
+import { EventType } from "../models/event.models";
 
 dotenv.config();
 
@@ -34,17 +37,44 @@ export class AuthService {
     return Promise.resolve(user);
   }
 
-  public static async registerColab(colab: ColabType, producerId: string): Promise<ColabType>{
-    try{
+  public static async registerColab(
+    colab: ColabType,
+    producerId: string
+  ): Promise<ColabType> {
+    try {
+      await OperationsDB.registerItem(colab, colabModels).then(
+        async (rColab: any) => {
+          return await OperationsDB.addIdToRelatedCollection(
+            producerId,
+            rColab._id,
+            "colabs",
+            producerModels
+          );
+        }
+      );
 
-      await OperationsDB.registerItem(colab, colabModels).then(async (rColab: any) => {
-        return await OperationsDB.addIdToRelatedCollection(producerId, rColab._id, 'colabs', producerModels)
-      })
-      
-      return colab
-    } catch(err: any){
-      return Promise.reject(err)
+      return colab;
+    } catch (err: any) {
+      return Promise.reject(err);
+    }
+  }
 
+  public static async verifyColabIntoEvent(
+    emailColab: string,
+    eventId: string
+  ): Promise<boolean> {
+    try {
+      const event: EventType = await OperationsDB.getById(eventId, eventModel);
+
+      const findColab = event.colabs.find((element) => element === emailColab);
+
+      if (!findColab) {
+        return false
+      }
+
+      return Promise.resolve(true);
+    } catch (error: any) {
+      return Promise.reject(error);
     }
   }
 
@@ -148,22 +178,25 @@ export class AuthService {
   ) {
     try {
       if (userType === "Customer") {
-        await OperationsDB.updateItems(id, {password: newPassword}, customerModel).then(
-          (update: any) => {
-            return Promise.resolve(update);
-          }
-        );
+        await OperationsDB.updateItems(
+          id,
+          { password: newPassword },
+          customerModel
+        ).then((update: any) => {
+          return Promise.resolve(update);
+        });
       } else if (userType == "Producer") {
-        await OperationsDB.updateItems(id, {password: newPassword}, ProducerModel).then(
-          (update: any) => {
-            return Promise.resolve(update);
-          }
-        );
+        await OperationsDB.updateItems(
+          id,
+          { password: newPassword },
+          ProducerModel
+        ).then((update: any) => {
+          return Promise.resolve(update);
+        });
       } else {
         return Promise.reject();
       }
-    }
-    catch (error: any) {
+    } catch (error: any) {
       return Promise.reject();
     }
   }

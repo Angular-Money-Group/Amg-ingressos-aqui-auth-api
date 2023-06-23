@@ -1,3 +1,4 @@
+export { EventNotFound } from './eventNotFound';
 export { UnauthorizedResponse} from './unauthorizedResponse';
 export {ForbiddenResponse} from './forbiddenResponse';
 export {ModelNotFound} from './modelNotFound';

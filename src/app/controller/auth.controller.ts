@@ -2,12 +2,17 @@ import EmailService from "./../services/emails.service";
 import { Request, Response } from "express";
 import authService, { AuthService } from "../services/auth.service";
 import { Logger } from "../services/logger.service";
-import { createdResponse, internalServerErrorResponse, sessionExpired } from "../utils/responses.utils";
+import {
+  createdResponse,
+  eventNotFound,
+  internalServerErrorResponse,
+  sessionExpired,
+  unauthorizedResponse,
+} from "../utils/responses.utils";
 import customerModel from "./../models/customer.model";
 import producerModels from "./../models/producer.models";
 import * as Exception from "../exceptions";
 import {
-  badRequestResponse,
   successResponse,
   unprocessableEntityResponse,
   userNotFound,
@@ -19,6 +24,7 @@ import {
   emailNotConfirmed,
   failedToUpdatePassword,
 } from "./../utils/responses.utils";
+import colabModels from "../models/colab.models";
 
 export class AuthController {
   constructor() {}
@@ -41,7 +47,7 @@ export class AuthController {
 
       user = user.find((userOb: any) => {
         return userOb;
-      })
+      });
 
       if (!user) {
         throw new Exception.UserNotFound("Usuario nao encontrado");
@@ -49,7 +55,10 @@ export class AuthController {
 
       if ("cpf" in user) {
         userType = "Customer";
-      } else if(user.email === process.env.EMAIL_ADMIN || user.email === process.env.EMAIL_ADMIN2){
+      } else if (
+        user.email === process.env.EMAIL_ADMIN ||
+        user.email === process.env.EMAIL_ADMIN2
+      ) {
         userType = "Admin";
       } else if ("cnpj" in user) {
         userType = "Producer";
@@ -90,21 +99,17 @@ export class AuthController {
       Logger.infoLog("Send token to cookies");
 
       return successResponse(res, { accessToken });
-
     } catch (error: any) {
       if (error instanceof Exception.UnprocessableEntityResponse) {
         Logger.errorLog("Missing params");
         return unprocessableEntityResponse(res);
-      }
-      else if (error instanceof Exception.UserNotFound) {
+      } else if (error instanceof Exception.UserNotFound) {
         Logger.errorLog("User not found");
         return userNotFound(res);
-      }
-      else if (error instanceof Exception.InvalidPassword) {
+      } else if (error instanceof Exception.InvalidPassword) {
         Logger.errorLog("Password not match");
         return invalidPassword(res);
-      }
-      else {
+      } else {
         Logger.errorLog(
           "error_code: " + error.error_code + "Login error: " + error
         );
@@ -116,20 +121,89 @@ export class AuthController {
 
   public async registerColab(req: Request, res: Response) {
     try {
-      const { name, cpf, email, password, producerId } =
-        req.body;
+      const { name, cpf, email, password, producerId } = req.body;
 
-        if(!name|| !cpf|| !email|| !password|| !producerId) return unprocessableEntityResponse(res)
+      if (!name || !cpf || !email || !password || !producerId)
+        return unprocessableEntityResponse(res);
 
-        const hashPassword = await AuthService.hashPassword(password);
-        Logger.infoLog("Gen Passhash " + hashPassword);
-  
-        const resultData = await AuthService.registerColab({name, cpf, email, password: hashPassword}, producerId)
+      const hashPassword = await AuthService.hashPassword(password);
+      Logger.infoLog("Gen Passhash " + hashPassword);
 
-        return createdResponse(res, resultData, 'Colaborador')
-      } catch(err: any) {
-        return internalServerErrorResponse(res, err.message);
+      const resultData = await AuthService.registerColab(
+        { name, cpf, email, password: hashPassword },
+        producerId
+      );
+
+      return createdResponse(res, resultData, "Colaborador");
+    } catch (err: any) {
+      return internalServerErrorResponse(res, err.message);
+    }
+  }
+
+  public async loginColab(req: Request, res: Response) {
+    try {
+      const { email, password, eventId } = req.body;
+
+      if (!email || !password || !eventId)
+        return unprocessableEntityResponse(res);
+
+      const user = await AuthService.findUserByEmail(email, colabModels);
+
+      if (!user) {
+        throw new Exception.UserNotFound("Usuário não encontrado");
       }
+
+      const verifyColabIntoEvent = await AuthService.verifyColabIntoEvent(email, eventId)
+
+      if(!verifyColabIntoEvent){
+        throw new Exception.UnauthorizedResponse("Usuário não permitido")
+      }
+
+      const isMatch = await AuthService.comparePassword(
+        password,
+        user.password as string
+      );
+
+      if (!isMatch) {
+        throw new Exception.InvalidPassword("Senha invalida");
+      }
+
+      const userType = "Colab";
+
+      Logger.infoLog("Delete User password for generate tokens");
+
+      delete user.password;
+
+      if (user.password) user.password = undefined;
+      Logger.infoLog(user);
+
+      Logger.infoLog("Generate tokens");
+
+      const { accessToken, refreshToken } = await AuthService.generateTokens({
+        user,
+        userType,
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      Logger.infoLog("Send token to cookies");
+
+      return successResponse(res, { accessToken });
+    } catch (error: any) {
+      if (error instanceof Exception.UnauthorizedResponse) {
+        Logger.errorLog("User not permited");
+        return unauthorizedResponse(res);
+      } else if (error instanceof Exception.EventNotFound) {
+        Logger.errorLog("Password not match");
+        return eventNotFound(res);
+      } else {
+        return internalServerErrorResponse(res, error.message);
+      }
+    }
   }
 
   public async registerProducer(req: Request, res: Response) {
@@ -151,7 +225,7 @@ export class AuthController {
       if (
         !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
       ) {
-        throw new Exception.InvalidEmailFormat("Formato de email invalido")
+        throw new Exception.InvalidEmailFormat("Formato de email invalido");
       }
 
       const producer = await AuthService.findUserByEmail(email, producerModels);
@@ -203,26 +277,22 @@ export class AuthController {
 
       return successResponse(res, { producer: newProducer, userToken });
     } catch (error: any) {
-        if (error instanceof Exception.UnprocessableEntityResponse) {
-          Logger.errorLog("Missing params");
-          return unprocessableEntityResponse(res);
-        }
-        else if (error instanceof Exception.InvalidEmailFormat) {
-          Logger.errorLog("Invalid email format");
-          return invalidEmailFormat(res);
-        }
-        else if (error instanceof Exception.EmailAlreadyExists) {
-          Logger.errorLog("User email already exists");
-          return emailAlreadyExists(res);
-        }
-        else if(error instanceof Exception.FailedToRegister) {
-          Logger.errorLog("Producer not created");
-          return failToRegister(res);
-        }
-        else {
-          Logger.errorLog("Register Producer error: " + error.message);
-          internalServerErrorResponse(res, error.message);
-        }
+      if (error instanceof Exception.UnprocessableEntityResponse) {
+        Logger.errorLog("Missing params");
+        return unprocessableEntityResponse(res);
+      } else if (error instanceof Exception.InvalidEmailFormat) {
+        Logger.errorLog("Invalid email format");
+        return invalidEmailFormat(res);
+      } else if (error instanceof Exception.EmailAlreadyExists) {
+        Logger.errorLog("User email already exists");
+        return emailAlreadyExists(res);
+      } else if (error instanceof Exception.FailedToRegister) {
+        Logger.errorLog("Producer not created");
+        return failToRegister(res);
+      } else {
+        Logger.errorLog("Register Producer error: " + error.message);
+        internalServerErrorResponse(res, error.message);
+      }
     }
   }
 
@@ -237,7 +307,7 @@ export class AuthController {
       if (
         !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
       ) {
-        throw new Exception.InvalidEmailFormat("Formato de email invalido")
+        throw new Exception.InvalidEmailFormat("Formato de email invalido");
       }
 
       const customer = await AuthService.findUserByEmail(email, customerModel);
@@ -293,20 +363,16 @@ export class AuthController {
       if (error instanceof Exception.UnprocessableEntityResponse) {
         Logger.errorLog("Missing params");
         return unprocessableEntityResponse(res);
-      }
-      else if (error instanceof Exception.InvalidEmailFormat) {
+      } else if (error instanceof Exception.InvalidEmailFormat) {
         Logger.errorLog("Invalid email format");
         return invalidEmailFormat(res);
-      }
-      else if (error instanceof Exception.EmailAlreadyExists) {
+      } else if (error instanceof Exception.EmailAlreadyExists) {
         Logger.errorLog("User email already exists");
         return emailAlreadyExists(res);
-      }
-      else if(error instanceof Exception.FailedToRegister) {
+      } else if (error instanceof Exception.FailedToRegister) {
         Logger.errorLog("Customer not created");
         return failToRegister(res);
-      }
-      else {
+      } else {
         Logger.errorLog("Register Costumer error: " + error.message);
         internalServerErrorResponse(res, error.message);
       }
@@ -322,9 +388,7 @@ export class AuthController {
       });
       Logger.infoLog("Clear cookie");
       return successResponse(res, {});
-    } 
-    
-    catch (error: any) {
+    } catch (error: any) {
       Logger.errorLog("Logout error: " + error.message);
       return logoutError(res);
     }
@@ -351,9 +415,8 @@ export class AuthController {
       Logger.infoLog("Send token to cookies");
 
       return successResponse(res, { accessToken });
-    }
-    catch (error: any) {
-      if (error instanceof Exception.SessionExpired){
+    } catch (error: any) {
+      if (error instanceof Exception.SessionExpired) {
         Logger.errorLog("Refresh token not found");
         return sessionExpired(res);
       } else {
@@ -376,15 +439,20 @@ export class AuthController {
 
       console.log(req.body);
 
-      let user = await AuthService.findUserByEmail(req.body.email, customerModel);
+      let user = await AuthService.findUserByEmail(
+        req.body.email,
+        customerModel
+      );
 
       if (!user)
-        user = await AuthService.findUserByEmail(req.body.email, producerModels);
+        user = await AuthService.findUserByEmail(
+          req.body.email,
+          producerModels
+        );
 
       if (!user) {
         return successResponse(res, undefined);
         // throw new Exception.UserNotFound("Usuario nao encontrado");
-        
       } else {
         Logger.infoLog("Reenviando email");
         const emailService = new EmailService();
@@ -403,12 +471,10 @@ export class AuthController {
       if (error instanceof Exception.InvalidEmailFormat) {
         Logger.errorLog("Invalid email format");
         return invalidEmailFormat(res);
-      } 
-      else if (error instanceof Exception.UserNotFound) {
+      } else if (error instanceof Exception.UserNotFound) {
         Logger.errorLog("User not found");
         return userNotFound(res);
-      }
-      else {
+      } else {
         Logger.errorLog("Resend Email Error: " + error.message);
         return internalServerErrorResponse(res, error.message);
       }
@@ -456,8 +522,7 @@ export class AuthController {
       } else if (error instanceof Exception.EmailNotConfirmed) {
         Logger.errorLog("Email not Confirmed");
         emailNotConfirmed(res);
-      }
-      else {
+      } else {
         Logger.errorLog("Confirmation Email Error: " + error.message);
         return internalServerErrorResponse(res, error.message);
       }
@@ -468,8 +533,10 @@ export class AuthController {
     try {
       const { email } = req.body;
 
-      if (!/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)) {
-          throw new Exception.InvalidEmailFormat("Formato de email invalido")
+      if (
+        !/^[A-Za-z0-9+_.-]+[@]{1}[A-Za-z0-9-]+[.]{1}[A-Za-z.]+$/.test(email)
+      ) {
+        throw new Exception.InvalidEmailFormat("Formato de email invalido");
       }
 
       const customer = await AuthService.findUserByEmail(email, customerModel);
@@ -487,17 +554,15 @@ export class AuthController {
       await emailService.sendEmailForForgotPassword(email);
 
       return successResponse(res, undefined);
-    }
-    catch (error: any) {
+    } catch (error: any) {
       if (error instanceof Exception.InvalidEmailFormat) {
         Logger.errorLog("Invalid email format");
         return invalidEmailFormat(res);
       }
       if (error instanceof Exception.UserNotFound) {
         Logger.errorLog("User is not registered.");
-            successResponse(res, undefined);
-      }
-      else {
+        successResponse(res, undefined);
+      } else {
         Logger.errorLog("Forgot Password Error: " + error.message);
         return internalServerErrorResponse(res, error.message);
       }
@@ -523,18 +588,18 @@ export class AuthController {
           successResponse(res, undefined);
         })
         .catch((err) => {
-          throw new Exception.FailedToUpdatePassword("Falha ao atualizar senha");
+          throw new Exception.FailedToUpdatePassword(
+            "Falha ao atualizar senha"
+          );
         });
     } catch (error: any) {
       if (error instanceof Exception.UnprocessableEntityResponse) {
         Logger.errorLog("Missing params");
         return unprocessableEntityResponse(res);
-      }
-      else if (error instanceof Exception.FailedToUpdatePassword) {
+      } else if (error instanceof Exception.FailedToUpdatePassword) {
         Logger.errorLog("Failed to Update Password");
         failedToUpdatePassword(res);
-      }
-      else {
+      } else {
         Logger.errorLog("Reset Password Error: " + error.message);
         return internalServerErrorResponse(res, error.message);
       }

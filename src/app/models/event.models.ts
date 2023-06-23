@@ -1,7 +1,4 @@
 import mongoose, { Document } from "mongoose";
-import { VIPAreaType } from "./viparea.model";
-import { DaysType } from "./days.models";
-import { LotsType } from "./lots.models";
 
 const eventModel = new mongoose.Schema({
   name: { type: String, required: true },
@@ -19,13 +16,18 @@ const eventModel = new mongoose.Schema({
   referencePoint: { type: String, required: true },
   days: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Days' }],
   lots: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lots' }],
-  VIPArea: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VIPArea' }],
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
+  status: { type: Number, required: true },
+  idMeansReceipt: { type: mongoose.Schema.Types.ObjectId, ref: 'Receiptaccounts', default: null },
+  idOrganizer: { type: mongoose.Schema.Types.ObjectId, ref: 'Producers', required: true },
+  highlighted: { type: Boolean, default: false },
+  colabs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Colabs' }]
 });
 
 export default mongoose.model<EventType>("Event", eventModel);
 
 export interface EventType extends Document {
-  id?: string;
   name: string;
   local: string;
   type: string;
@@ -39,7 +41,14 @@ export interface EventType extends Document {
   city: string;
   state: string;
   referencePoint: string;
-  days: DaysType[];
-  lots: LotsType[];
-  VIPArea: VIPAreaType[];
+  days: string[]; // Assuming it's an array of string IDs
+  lots: string[]; // Assuming it's an array of string IDs
+  startDate: Date;
+  endDate: Date;
+  status: number;
+  idMeansReceipt: string | null; // Assuming it's a string ID or null
+  idOrganizer: string; // Assuming it's a string ID
+  highlighted: boolean;
+  colabs: string[]; // Assuming it's an array of string IDs
 }
+
