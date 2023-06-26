@@ -16,6 +16,7 @@ import {
   unprocessableEntityResponse,
   userNotFound,
 } from "./../utils/responses.utils";
+import ticketModels from "../models/ticket.models";
 
 export class UserController {
   constructor() {}
@@ -100,11 +101,8 @@ export class UserController {
 
       Logger.infoLog("Get users");
       var users = await UserService.getAll(model);
-      console.log(users);
 
       users.forEach((element: any) => {
-        console.log("ELEMENTO " + element);
-        console.log("req.body.user.user._id " + req.body.user.user._id);
         if (element._id == req.body.user.user._id) {
           users.splice(users.indexOf(element));
         }
@@ -126,6 +124,22 @@ export class UserController {
       }
       Logger.errorLog(err.message);
       return internalServerErrorResponse(res, err.message);
+    }
+  }
+
+  public async getTicketsByUserID(req: Request, res: Response) {
+    try {
+      const userId = req.params.id;
+
+      if (!userId) return unprocessableEntityResponse(res);
+
+      const tickets = await UserService.findTicketsByUser(userId);
+
+      ticketModels
+
+      return successResponse(res, tickets);
+    } catch (err: any) {
+      return internalServerErrorResponse(res, err);
     }
   }
 
@@ -309,5 +323,28 @@ export class UserController {
       Logger.infoLog("Error " + err.message);
       return internalServerErrorResponse(res, err.message);
     }
+  }
+
+  public async deleteColab(req: Request, res: Response){
+    const idColab: any = req.params.idColab;
+    const idProducer: any = req.params.idProducer;
+
+    if (!idProducer || !idColab) {
+      return unprocessableEntityResponse(res);
+    }
+
+    try {
+
+      await UserService.deleteItems(idColab, colabModels)
+      const producer: ProducerType = await UserService.findUser(idProducer, producerModels)
+
+      producer.colabs?.splice(idColab, 1)
+      producer.save()
+
+      return successResponse(res, null)
+    } catch(err: any){
+      return internalServerErrorResponse(res, err)
+    }
+
   }
 }

@@ -1,17 +1,15 @@
-import eventModel from "../models/event.models";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import { Model } from "mongoose";
 import { OperationsDB } from "../db/operations.db";
+import colabModels, { ColabType } from "../models/colab.models";
 import CustomerModel from "../models/customer.model";
+import eventModel, { EventType } from "../models/event.models";
 import ProducerModel from "../models/producer.models";
 import customerModel, { CustomerType } from "./../models/customer.model";
 import producerModels, { ProducerType } from "./../models/producer.models";
 import { Logger } from "./logger.service";
-import { Model } from "mongoose";
-import colabModels, { ColabType } from "../models/colab.models";
-import * as Exception from "../exceptions";
-import { EventType } from "../models/event.models";
 
 dotenv.config();
 

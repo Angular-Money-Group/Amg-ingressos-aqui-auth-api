@@ -2,6 +2,8 @@ import { OperationsDB } from "../db/operations.db";
 import { Model } from "mongoose";
 import { Logger } from "./logger.service";
 import producerModels from "../models/producer.models";
+import customerModel from "../models/customer.model";
+import { CustomerType } from "../models/customer.model";
 
 export default class UserService {
   public static async getAll<M extends Model<any>>(model: M) {
@@ -15,7 +17,9 @@ export default class UserService {
 
   public static async getAllColabs(producerId: string) {
     try {
-      return Promise.resolve(await OperationsDB.getById(producerId, producerModels, "colabs"));
+      return Promise.resolve(
+        await OperationsDB.getById(producerId, producerModels, "colabs")
+      );
     } catch {
       return Promise.reject(new Error("Error on paginate"));
     }
@@ -56,17 +60,43 @@ export default class UserService {
     }
   }
 
-  public static async removeValueFromArrayField<M extends Model<any>>(elementId: string, fieldName: string, model: M, valueToRemove: string) {
-    // const idObject = new mongoose.Types.ObjectId(valueToRemove);
-    const { ObjectId } = require('mongodb');
-    const idExternal =  new ObjectId(valueToRemove);
+  public static async findTicketsByUser(id: string) {
+    try {
+      Logger.infoLog("Finding User");
+      const userData: CustomerType = await OperationsDB.getById(
+        id,
+        customerModel,
+        "tickets"
+      );
+
+      return userData.tickets;
+    } catch (err: any) {
+      return Promise.reject(err);
+    }
+  }
+
+  public static async removeValueFromArrayField<M extends Model<any>>(
+    elementId: string,
+    fieldName: string,
+    model: M,
+    valueToRemove: string
+  ) {
+    const { ObjectId } = require("mongodb");
+    const idExternal = new ObjectId(valueToRemove);
     console.log("ObjectId: " + valueToRemove);
-    await OperationsDB.removeValueFromArrayField(elementId, fieldName, model, idExternal).then(() => {
-      Logger.infoLog('Deleted Succefull')
-      return Promise.resolve()
-    }).catch((err: any) => {
-      Logger.infoLog('Error ' + err.message)
-      return Promise.reject()
-    })
+    await OperationsDB.removeValueFromArrayField(
+      elementId,
+      fieldName,
+      model,
+      idExternal
+    )
+      .then(() => {
+        Logger.infoLog("Deleted Succefull");
+        return Promise.resolve();
+      })
+      .catch((err: any) => {
+        Logger.infoLog("Error " + err.message);
+        return Promise.reject();
+      });
   }
 }

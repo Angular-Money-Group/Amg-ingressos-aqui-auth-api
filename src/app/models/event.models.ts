@@ -41,8 +41,6 @@ export interface EventType extends Document {
   city: string;
   state: string;
   referencePoint: string;
-  days: string[]; // Assuming it's an array of string IDs
-  lots: string[]; // Assuming it's an array of string IDs
   startDate: Date;
   endDate: Date;
   status: number;

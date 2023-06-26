@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
 const producerModel = new mongoose.Schema({
   name: { type: String, required: true },
@@ -31,7 +31,7 @@ const producerModel = new mongoose.Schema({
 
 export default mongoose.model("Producer", producerModel);
 
-export interface ProducerType {
+export interface ProducerType extends Document {
   id?: string;
   name: string;
   cnpj: string;
