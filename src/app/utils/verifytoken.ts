@@ -1,11 +1,14 @@
-import { unauthorizedResponse, forbiddenResponse } from "./responses.utils";
+import {
+  unauthorizedResponse,
+  forbiddenResponse,
+  tokenExpiradoResponse,
+} from "./responses.utils";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Logger } from "../services/logger.service";
 
 export class TokenValidation {
-
-  constructor(){}
+  constructor() {}
 
   authenticateToken(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
@@ -22,6 +25,9 @@ export class TokenValidation {
       (err: any, payload: any) => {
         if (err) {
           Logger.errorLog("Error verifying token: " + err);
+          if (err.message === "jwt expired" || 'invalid token') {
+            return tokenExpiradoResponse(res);
+          }
           return forbiddenResponse(res);
         }
 
@@ -29,7 +35,7 @@ export class TokenValidation {
         next();
       }
     );
-  };
+  }
 
   verifyProducerPermission(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
@@ -40,6 +46,10 @@ export class TokenValidation {
       (err: any, payload: any) => {
         if (err) {
           Logger.errorLog("Error verifying token: " + err);
+          if (err.message === "jwt expired" || 'invalid token') {
+            return tokenExpiradoResponse(res);
+          }
+
           return forbiddenResponse(res);
         }
 
@@ -54,7 +64,7 @@ export class TokenValidation {
     );
   }
 
-  verifyAdminPermission(req: Request, res: Response, next: NextFunction){
+  verifyAdminPermission(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
     jwt.verify(
@@ -63,6 +73,9 @@ export class TokenValidation {
       (err: any, payload: any) => {
         if (err) {
           Logger.errorLog("Error verifying token: " + err);
+          if (err.message === "jwt expired" || 'invalid token') {
+            return tokenExpiradoResponse(res);
+          }
           return forbiddenResponse(res);
         }
 

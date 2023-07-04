@@ -81,6 +81,10 @@ export const unprocessableEntityResponse = (res: Response, data?: any) => {
     return res.status(422).json({ message: "Ah não! Parece que você não preencheu todos os campos", data });
 }
 
+export const tokenExpiradoResponse = (res: Response) => {
+    return res.status(498).json({ message: "Token Invalido ou expirado" });
+}
+
 export const internalServerErrorResponse = (res: Response, error: any) => {
     return res.status(500).json({ message: 'Ops! Algo deu errado, tente novamente mais tarde', error})
 }
