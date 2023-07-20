@@ -6,6 +6,7 @@ import {
   createdResponse,
   eventNotFound,
   internalServerErrorResponse,
+  notFoundResponse,
   sessionExpired,
   unauthorizedResponse,
 } from "../utils/responses.utils";
@@ -561,7 +562,7 @@ export class AuthController {
       }
       if (error instanceof Exception.UserNotFound) {
         Logger.errorLog("User is not registered.");
-        successResponse(res, undefined);
+        notFoundResponse(res);
       } else {
         Logger.errorLog("Forgot Password Error: " + error.message);
         return internalServerErrorResponse(res, error.message);

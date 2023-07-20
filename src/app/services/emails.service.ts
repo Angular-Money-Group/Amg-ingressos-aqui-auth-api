@@ -73,7 +73,7 @@ export class EmailService {
     const options: SendMailOptions = {
       from: process.env.EMAIL_EMAIL,
       to: infoEmail.email,
-      subject: "[DEV/TESTE] - Confirmação de E-mail",
+      subject: "Confirmação de E-mail",
       html: html,
     };
 
@@ -171,7 +171,7 @@ a {
     const options: SendMailOptions = {
       from: process.env.EMAIL_EMAIL,
       to: email,
-      subject: "[DEV/TESTE] - Esqueci Minha Senha",
+      subject: "Esqueci Minha Senha",
       html: html,
     };
 
@@ -218,7 +218,6 @@ a {
   ) {
     try {
       const user = await OperationsDB.getById(userId, model);
-      console.log("AQUIIIIIIIIII" + user);
       if (user.emailConfirmationCode.expirationDate < new Date()) {
         return Promise.reject("Code expiration");
       } else if (user.emailConfirmationCode.code != code) {
